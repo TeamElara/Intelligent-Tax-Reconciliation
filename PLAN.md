@@ -47,7 +47,7 @@ Phases 1 and 2 run in parallel (different parts of the file; merge 1 first). Pha
 **Owner:** Mahatva · **Branch:** `phase-1-rebrand` · **Cut-off:** 21:00 · **Files:** `index.html` (HTML/CSS/copy only, no engine code)
 
 Tasks
-1. TaxLens → Rekora: `<title>`, brand name, "Ask Rekora", footer, copilot greeting, localStorage key `rekora-theme`.
+1. Replace any leftover old-name text with Rekora: `<title>`, brand name, "Ask Rekora", footer, copilot greeting, localStorage key `rekora-theme`.
 2. "Recoverable ITC" → **"Potential credit to review"** (bucket card, chip, waterfall label, legend, copilot text). Sub-line: "In GSTR-2B, not in your books. Check before you claim."
 3. Missing-in-2B wording: "follow up with the supplier", never "fake".
 4. DRC-01C line in the Liability steps: "a notice can follow when the claim exceeds GSTR-2B beyond the threshold".
@@ -55,7 +55,7 @@ Tasks
 6. Remove any UI copy that says ML or LLM.
 
 **Done when**
-- [ ] `grep -i taxlens index.html` returns nothing
+- [ ] `grep -i "taxlens" index.html` returns nothing
 - [ ] Both themes and a 375px-wide window look right
 - [ ] Chaos Mode still catches all 6 break types
 - [ ] No console errors

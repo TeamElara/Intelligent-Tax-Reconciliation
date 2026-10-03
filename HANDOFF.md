@@ -1,11 +1,11 @@
-# Rekora (formerly TaxLens): project handoff
+# Rekora: project handoff
 
-Read this first, then PLAN.md (the time-boxed build plan, supersedes "Next steps" below). Product name is **Rekora** (Team Elara: Arihant Jain, Mahatva Goel); the UI still says TaxLens until the rebrand lands.
+Read this first, then PLAN.md (the time-boxed build plan, supersedes "Next steps" below). Product name is **Rekora** (Team Elara: Arihant Jain, Mahatva Goel); the UI still says Rekora until the rebrand lands.
 
 Repo: github.com/TeamElara/Intelligent-Tax-Reconciliation. (name ends with a period; PUBLIC). Python 3.9 venv in `.venv`.
 
 ## What this is
-TaxLens is our entry for **Fintechstico v7.0 (Consilium'26, NSUT)**, Problem Statement 2: Intelligent Tax Reconciliation. Team of two, building for the full 24 hours, goal is to win.
+Rekora is our entry for **Fintechstico v7.0 (Consilium'26, NSUT)**, Problem Statement 2: Intelligent Tax Reconciliation. Team of two, building for the full 24 hours, goal is to win.
 
 One-liner: every GST mismatch across purchase books, GSTR-2B and bank, found, priced in ₹ and explained, before the department finds it.
 Design rule (say it in the pitch): **Rules compute. ML flags. The LLM explains. A human decides.**
@@ -19,14 +19,14 @@ Design rule (say it in the pitch): **Rules compute. ML flags. The LLM explains. 
 - `index.html`: the full front-end prototype. One file, vanilla JS, no build step. Open it in a browser.
   - Fonts: Eczar (display and ₹ figures) + Mukta (UI, has Devanagari for Hindi drafts), loaded from Google Fonts.
   - Dark "ledger ink" theme by default, light "ledger paper" theme via the toggle.
-- Also produced in chat (not in this folder): `TaxLens_Ideation.pptx` (19-slide deck), architecture PNG, dashboard mockup PNG, pitch cheat sheet.
+- Also produced in chat (not in this folder): `Elara_Rekora_Fintechstico.pptx` (19-slide deck), architecture PNG, dashboard mockup PNG, pitch cheat sheet.
 
 ## What index.html already does
 - **Hero**: ITC waterfall (books → at risk → to reverse → recoverable → credit you can defend), net GST payable, three ₹ bucket cards that filter the queue.
 - **Engine in JS** (`runEngine`): canonical invoice IDs (INV/0042 = INV-42), GSTIN mod-36 checksum, fuzzy GSTIN-typo match, amount mismatch, tax value check, date-aware rate check (12%/28% scrapped from 22 Sep 2025), IGST vs CGST+SGST from state code, duplicates, missing in 2B / missing in books, 180-day unpaid rule, split payments (subset-sum up to 3 parts), spike detection (>8× supplier median).
 - **Issue queue + evidence panel**: books / GSTR-2B / bank side by side, diff cells highlighted, plain-English reason, actions (resolve with undo, ₹ totals update correctly).
 - **Chaos Mode** drawer: break a clean bill 6 ways, engine re-runs, new issue appears with "New" badge, scoreboard planted/caught/missed.
-- **Ask TaxLens** drawer: demo copilot with intent matching over engine output, record chips that jump to the queue, "N figures checked against engine output" badge.
+- **Ask Rekora** drawer: demo copilot with intent matching over engine output, record chips that jump to the queue, "N figures checked against engine output" badge.
 - **Follow-up drafts** in English and Hindi (missing in 2B, tax type, rate, amount), copy button.
 - Supplier risk table, Section 49 set-off table by tax head, GSTR-3B draft JSON download, deadlines (draft 2B on 14 Oct, GSTR-3B on 20 Oct), keyboard shortcuts (J/K, /, Ctrl K).
 
