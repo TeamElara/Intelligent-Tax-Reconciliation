@@ -3,6 +3,12 @@
 Team Elara (Arihant Jain, Mahatva Goel). Fintechstico'26, PS2 Intelligent Tax Reconciliation.
 Written Sat 3 Oct 2026. v3 splits the v2 plan into phases. Each phase ships on its own.
 
+## Status (3 Oct, evening)
+
+Built and on `main`: phases 0 to 5 (shared engine and rule fixes, generator and accuracy table, CSV and GSTR-2B JSON upload, Chaos Mode trap), plus additions beyond the plan: in-browser Isolation Forest and Benford check, decision log with CSV exports, answer verifier in Ask Rekora, README. Still to do: the video and submission (phase 6), deck edits, finals rehearsal, self-hosted fonts, and the history cleanup.
+
+Not built, so not to be claimed: React, FastAPI, a database, a hosted LLM copilot, SHAP.
+
 ## The clock
 
 | When (IST) | What |
