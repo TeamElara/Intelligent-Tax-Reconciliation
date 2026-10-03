@@ -489,6 +489,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
     <section class="section" id="queue" aria-labelledby="qTitle">
       <div class="sec-head">
         <div><h2 id="qTitle">Issue queue</h2><p>Biggest money first. Pick a row to see the evidence.</p></div>
+        <button class="btn small" type="button" data-export-queue>Export queue (CSV)</button>
         <div class="chips" role="group" aria-label="Filter by bucket" id="chips">
           <button class="chip" data-filter="all" aria-pressed="true">All</button>
           <button class="chip" data-filter="risk" aria-pressed="false"><i style="background:var(--amber)"></i>At risk</button>
@@ -506,6 +507,12 @@ table.acc .miss { color:var(--red); font-weight:600; }
         </div>
         <aside class="evidence" id="evidence" aria-live="polite"></aside>
       </div>
+    </section>
+
+    <section class="section" id="decisions" aria-labelledby="decTitle" hidden>
+      <div class="sec-head"><div><h2 id="decTitle">Decision log</h2><p>Every decision, with the evidence it rested on and its effect on your claim. Undo removes the entry.</p></div>
+        <button class="btn small" type="button" data-export-log>Export decision log (CSV)</button></div>
+      <div class="table-wrap"><table class="sup"><thead><tr><th>Time</th><th>Issue</th><th>Supplier and invoice</th><th>Decision</th><th>At stake</th><th>Effect on your claim</th></tr></thead><tbody id="decBody"></tbody></table></div>
     </section>
 
     <section class="section" id="suppliers" aria-labelledby="supTitle">
@@ -607,7 +614,7 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
    ===================================================================== */
 const S = {
   D:null, baseSet:null, groups:[], all:[], initialOpen:null, resolved:new Map(), booksDelta:0, resolvedCount:0,
-  filter:'all', query:'', sel:null, billIdx:0, counts:null, lastMs:0, prevWf:null, clean:null, up:{}, srcNote:'',
+  decisions:[], seq:0, filter:'all', query:'', sel:null, billIdx:0, counts:null, lastMs:0, prevWf:null, clean:null, up:{}, srcNote:'',
   chaos:{ planted:0, caught:0, missed:0, traps:0, ignored:0, falseAlarms:0, log:[], broken:new Set() }, newKeys:new Set(), undo:null,
 };
 // Datasets. The bundled demo month is the default; ?demo=seed forces the small built-in sample (whose headline totals are scaled by BASE).
@@ -615,6 +622,7 @@ function seedSet() { return { D:Object.assign(structuredClone(SEED), { base:BASE
 function demoSet() { const d = structuredClone(window.REKORA_DEMO.D); Ingest.withPeriod(d, window.REKORA_DEMO.sales); return { D:d, label:'Bundled demo month' }; }
 function defaultSet() { return window.REKORA_DEMO && !/demo=seed/.test(location.search) ? demoSet() : seedSet(); }
 function reset(set) {
+  S.decisions = [];
   S.baseSet = set || S.baseSet || defaultSet();
   S.D = structuredClone(S.baseSet.D); S.resolved = new Map(); S.booksDelta = 0; S.resolvedCount = 0;
   S.counts = Object.assign({}, BASE_COUNTS); S.chaos = { planted:0, caught:0, missed:0, traps:0, ignored:0, falseAlarms:0, log:[], broken:new Set() }; S.newKeys = new Set();
@@ -703,9 +711,32 @@ function animateNum(el, to, fmt = inr, dur = 900) {
   requestAnimationFrame(step);
 }
 function renderAll() {
-  renderBenford(); renderMeta(); renderAccuracy(); renderHero(); renderStatus(); renderQueue(); renderEvidence(); renderSuppliers(); renderLiability(); renderSources(); renderChaos();
+  renderDecisions(); renderBenford(); renderMeta(); renderAccuracy(); renderHero(); renderStatus(); renderQueue(); renderEvidence(); renderSuppliers(); renderLiability(); renderSources(); renderChaos();
 }
 const TYPE_ORDER = ['missing2b', 'missingBooks', 'amount', 'taxValue', 'gstin', 'rate', 'taxType', 'duplicate', 'unpaid180', 'split', 'combined', 'doublePay', 'spike'];
+// What the decision does to the claim, in words.
+const effectText = (d) => (d.claimDelta < 0 ? `Claim reduced by ${inr(-d.claimDelta)}` : d.claimDelta > 0 ? `Claim raised by ${inr(d.claimDelta)}` : d.eligibleDelta > 0 ? `Credit stays, eligible ITC +${inr(d.eligibleDelta)}` : d.eligibleDelta < 0 ? `Eligible ITC −${inr(-d.eligibleDelta)}` : 'No change to the claim');
+const stamp = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+function renderDecisions() {
+  const sec = $('#decisions'); sec.hidden = !S.decisions.length;
+  $('#decBody').innerHTML = S.decisions.slice().reverse().map((d) => `<tr><td>${stamp(d.at).slice(11)}<small>${stamp(d.at).slice(0, 10)}</small></td><td><b>${esc(d.issue)}</b><small>${esc(d.ims ? 'IMS advice: ' + d.ims : '')}</small></td><td><b>${esc(d.sup)}</b><small>${esc(d.invoices)}</small></td><td>${esc(d.action)}</td><td class="num">${inr(d.impact)}</td><td>${effectText(d)}</td></tr>`).join('');
+}
+// CSV with a BOM so Excel opens it as UTF-8. Cells starting with = + - @ get a leading apostrophe so a supplier name cannot run as a formula.
+function downloadCsv(name, cols, rows) {
+  const cell = (v) => { v = v === undefined || v === null ? '' : String(v); if (/^[=+\-@]/.test(v) && isNaN(Number(v))) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const text = '\uFEFF' + [cols.map((c) => c[0]).join(','), ...rows.map((r) => cols.map((c) => cell(c[1](r))).join(','))].join('\r\n') + '\r\n';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type:'text/csv;charset=utf-8' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function exportLog() {
+  if (!S.decisions.length) return toast('<b>No decisions yet.</b> Resolve an issue and it appears here.');
+  downloadCsv(`Rekora_decision_log_${periodOf()}.csv`, [['Logged at', (d) => stamp(d.at)], ['Return period', () => periodOf()], ['Issue', (d) => d.issue], ['Bucket', (d) => d.bucket], ['Supplier', (d) => d.sup], ['Supplier GSTIN', (d) => d.gstin], ['Invoices', (d) => d.invoices], ['At stake (INR)', (d) => d.impact], ['Decision', (d) => d.action], ['Result', (d) => d.outcome], ['Effect on claim', (d) => effectText(d)], ['Claim change (INR)', (d) => d.claimDelta], ['Change in eligible ITC (INR)', (d) => d.eligibleDelta], ['IMS advice', (d) => d.ims], ['Evidence and reason', (d) => d.why]], S.decisions);
+  toast(`<b>Decision log downloaded.</b> ${S.decisions.length} decision${S.decisions.length > 1 ? 's' : ''}.`);
+}
+function exportQueue() {
+  const rows = S.all.slice().sort((a, b) => b.impact - a.impact);
+  downloadCsv(`Rekora_issue_queue_${periodOf()}.csv`, [['Rank', (g) => rows.indexOf(g) + 1], ['Issue', (g) => TYPES[g.type].label], ['Bucket', (g) => bucketOf(g)], ['Supplier', (g) => supName(g.sup)], ['Supplier GSTIN', (g) => S.D.suppliers[g.sup].gstin], ['Invoices', (g) => g.bills.map((id) => rec(id).inv).join(' ')], ['At stake (INR)', (g) => g.impact], ['Status', (g) => (S.resolved.has(g.key) ? 'Decided' : 'Open')], ['IMS advice', (g) => (g.items[0].ims ? g.items[0].ims.act : '')], ['Why flagged', (g) => explain(g)]], rows);
+  toast(`<b>Issue queue downloaded.</b> ${rows.length} issues.`);
+}
 function renderBenford() {
   const el = $('#benford'), b = Rekora.ml.benford(S.D);
   if (!b) { el.hidden = true; return; }
@@ -1007,16 +1038,20 @@ function renderSources() {
     `<label class="drop" id="drop"><input type="file" multiple accept=".csv,text/csv" hidden id="fileIn"><b>Drop CSV files here, or click</b>Purchase register, GSTR-2B, bank statement and sales register. They are read in your browser and never uploaded.${S.srcNote ? '<span class="drop-note">' + esc(S.srcNote) + '</span>' : ''}</label>`;
 }
 
-function resolve(g, act, msg) {
+function resolve(g, act, msg, label) {
   const before = S.totals.eligible;
   const delta = act === 'fix' ? -g.impact : act === 'add' ? g.impact : 0;
+  const why = explain(g), item = g.items[0], ty = TYPES[g.type];
   S.resolved.set(g.key, delta); S.booksDelta += delta; S.resolvedCount++;
   const idx = visibleGroups().findIndex((x) => x.key === g.key);
   compute();
   const vis = visibleGroups(); S.sel = (vis[idx] || vis[idx - 1] || vis[0] || {}).key || null; S.billIdx = 0;
-  renderAll();
   const diff = S.totals.eligible - before;
-  toast(`<b>${esc(msg)}</b>${diff ? ` Eligible ITC ${diff > 0 ? 'up' : 'down'} ${inr(Math.abs(diff))}.` : ''}`, () => { S.resolved.delete(g.key); S.booksDelta -= delta; S.resolvedCount--; compute(); S.sel = g.key; renderAll(); });
+  // The decision log: what was decided, on what evidence, with what effect on the claim.
+  const entry = { id:++S.seq, at:new Date(), key:g.key, issue:ty.label, bucket:bucketOf(g), sup:supName(g.sup), gstin:S.D.suppliers[g.sup].gstin, invoices:g.bills.map((id) => rec(id).inv).join(' '), impact:g.impact, action:label || msg, outcome:msg, claimDelta:delta, eligibleDelta:diff, ims:item.ims ? item.ims.act : '', why };
+  S.decisions.push(entry);
+  renderAll();
+  toast(`<b>${esc(msg)}</b>${diff ? ` Eligible ITC ${diff > 0 ? 'up' : 'down'} ${inr(Math.abs(diff))}.` : ''} Logged.`, () => { S.resolved.delete(g.key); S.booksDelta -= delta; S.resolvedCount--; S.decisions = S.decisions.filter((d) => d.id !== entry.id); compute(); S.sel = g.key; renderAll(); });
 }
 function draftFor(g) {
   const s = S.D.suppliers[g.sup], r = rec(g.bills[0]);
@@ -1321,11 +1356,13 @@ document.addEventListener('click', (e) => {
   if (t.dataset.bill !== undefined) { S.billIdx = +t.dataset.bill; return renderEvidence(); }
   if (t.dataset.act) {
     const g = S.groups.find((x) => x.key === S.sel), a = ACTIONS[g.type][+t.dataset.n];
-    return t.dataset.act === 'draft' ? openDraft(g) : resolve(g, t.dataset.act, a[2]);
+    return t.dataset.act === 'draft' ? openDraft(g) : resolve(g, t.dataset.act, a[2], a[0]);
   }
   if (t.dataset.open) return openLayer(t.dataset.open);
   if (t.hasAttribute('data-close')) return closeLayers();
   if (t.hasAttribute('data-export')) return exportJSON();
+  if (t.hasAttribute('data-export-log')) return exportLog();
+  if (t.hasAttribute('data-export-queue')) return exportQueue();
   if (t.dataset.lang) { LANG = t.dataset.lang; return paintDraft(); }
   if (t.dataset.goto) { closeLayers(true); S.filter = 'all'; select(t.dataset.goto); renderHero(); document.getElementById('queue').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' }); return; }
   if (t.dataset.sup) { S.query = S.D.suppliers[t.dataset.sup].name; $('#search').value = S.query; S.filter = 'all'; renderQueue(); renderHero(); const v = visibleGroups()[0]; if (v) select(v.key); document.getElementById('queue').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' }); return; }

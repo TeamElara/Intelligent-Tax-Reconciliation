@@ -74,3 +74,6 @@ The generator plants 13 error types plus "trap" bills (invoice-format variants, 
 - Supplier risk score = findings weighted by type + how unusual the supplier's own bills are + late filing, squashed to 0-99.
 - Benford's first-digit test runs on the whole ledger only, and says "not applicable" when bills span less than 50x from small to large, because it would flag normal data.
 - Measured on the synthetic test set: finds 137 of 137 planted unusual bills while flagging 2.0% of bills (`node tools/eval.js`). `node tools/check-ml.js` guards it on the demo month.
+
+## Decision log and exports
+Every action on an issue is recorded: time, issue, supplier and invoices, ₹ at stake, the decision, its effect on the claim, IMS advice, and the evidence text the engine gave at that moment. Undo removes the entry. "Export decision log (CSV)" and "Export queue (CSV)" download Excel-ready files (UTF-8 BOM; cells starting with = + - @ are prefixed so a supplier name cannot run as a formula). The log lives in the page only: it is cleared by Reset and when new files are loaded.
