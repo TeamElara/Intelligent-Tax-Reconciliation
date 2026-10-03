@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rekora Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F5F0E7; --paper:#FBF8F2; --paper-2:#F1EADF;
+  --ink:#1B2232; --ink-2:#465068; --muted:#8B8F9B; --line:#E5DCCD; --line-2:#EFE8DC;
+  --burgundy:#7A2335; --burgundy-2:#9B3A4C; --burgundy-soft:#F4E5E5;
+  --sage:#56715C; --sage-soft:#E5ECE2;
+  --ochre:#A4702F; --ochre-soft:#F5EAD8;
+  --serif:"Fraunces", Georgia, serif; --sans:"Inter", system-ui, sans-serif;
+  --r:18px; --r-sm:12px;
+  --shadow:0 1px 0 rgba(27,34,50,.03), 0 12px 32px -18px rgba(27,34,50,.18);
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:272px 1fr;min-height:100vh}
+aside{position:sticky;top:0;height:100vh;padding:28px 22px;display:flex;flex-direction:column;border-right:1px solid var(--line);background:linear-gradient(180deg,var(--paper) 0%,var(--cream) 100%)}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px 30px}
+.mark{width:30px;height:30px;border-radius:9px;background:var(--burgundy);display:grid;place-items:center;color:#F7EDE6;font-family:var(--serif);font-size:17px;font-weight:500}
+.brand b{font-family:var(--serif);font-weight:500;font-size:22px;letter-spacing:-.01em}
+
+.journey-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:0 6px 14px}
+.steps{list-style:none;position:relative}
+.step{position:relative;display:flex;gap:14px;padding:10px 8px;border-radius:var(--r-sm);text-align:left;width:100%;transition:background .3s var(--ease),opacity .4s var(--ease)}
+.step:not(:last-child)::after{content:"";position:absolute;left:21px;top:38px;bottom:-8px;width:1.5px;background:var(--line);transition:background .6s var(--ease)}
+.step.done::after{background:var(--burgundy-2)}
+.dot{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);display:grid;place-items:center;font-size:12px;color:var(--muted);transition:all .4s var(--ease);z-index:1}
+.step .t{font-size:14px;font-weight:500;color:var(--ink-2);display:block}
+.step .s{font-size:12.5px;color:var(--muted);display:block;margin-top:1px}
+.step.locked{opacity:.5;cursor:default}
+.step.locked .dot svg{width:11px;height:11px}
+.step:not(.locked):hover{background:var(--paper-2)}
+.step.active{background:var(--paper);box-shadow:var(--shadow)}
+.step.active .dot{border-color:var(--burgundy);color:var(--burgundy);background:var(--burgundy-soft)}
+.step.active .t{color:var(--ink)}
+.step.done .dot{background:var(--burgundy);border-color:var(--burgundy);color:#fff}
+.step.just-unlocked .dot{animation:pop .7s var(--ease)}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+
+.aside-foot{margin-top:auto;display:grid;gap:12px}
+.client{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--paper)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--sage-soft);color:var(--sage);display:grid;place-items:center;font-weight:600;font-size:12px}
+.client b{font-size:13px;font-weight:500;display:block}.client span{font-size:12px;color:var(--muted)}
+.privacy{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);padding:0 6px}
+.privacy i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 4px var(--sage-soft)}
+.unlock-all{font-size:11.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:0 6px;text-align:left}
+
+main{min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:22px 56px;gap:16px}
+.period{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.period .pill{padding:6px 12px;border:1px solid var(--line);border-radius:99px;background:var(--paper)}
+.progress{font-size:12.5px;color:var(--muted)}
+.search{display:flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid var(--line);border-radius:99px;background:var(--paper);color:var(--muted);font-size:13px;min-width:240px}
+.search kbd{margin-left:auto;font:11px var(--sans);border:1px solid var(--line);border-radius:6px;padding:1px 6px;background:var(--cream)}
+
+.stage{flex:1;padding:24px 56px 64px;max-width:1120px;width:100%;margin:0 auto}
+.screen{display:none}
+.screen.on{display:block}
+.screen.on > *{animation:rise .7s var(--ease) both;animation-delay:calc(var(--i,0) * 70ms)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--burgundy);font-weight:500;margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(34px,4.2vw,52px);line-height:1.08;letter-spacing:-.02em;max-width:18ch}
+h1 em{font-style:italic;color:var(--burgundy)}
+.lede{margin-top:16px;font-size:17px;color:var(--ink-2);max-width:56ch}
+h3{font-family:var(--serif);font-weight:500;font-size:20px;letter-spacing:-.01em}
+
+.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:99px;font-weight:500;font-size:14.5px;transition:transform .25s var(--ease),box-shadow .25s var(--ease),background .25s}
+.btn-primary{background:var(--ink);color:#F7F1E8;box-shadow:0 10px 24px -12px rgba(27,34,50,.6)}
+.btn-primary:hover{transform:translateY(-1px);background:#252d40}
+.btn-ghost{border:1px solid var(--line);background:var(--paper)}
+.btn-ghost:hover{background:var(--paper-2)}
+.btn-wine{background:var(--burgundy);color:#FBF1EE}
+.btn-wine:hover{background:var(--burgundy-2)}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
+
+.card{background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:var(--shadow)}
+
+.next{margin-top:56px;display:flex;align-items:center;gap:16px;padding:16px 20px;border:1px dashed var(--line);border-radius:var(--r);color:var(--ink-2);font-size:14px}
+.next .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.next b{font-weight:500;color:var(--ink)}
+.next .arrow{margin-left:auto;color:var(--burgundy)}
+
+/* ---------- 1 import ---------- */
+.files{margin-top:40px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.file{padding:20px;display:flex;flex-direction:column;gap:14px;min-height:150px;transition:transform .3s var(--ease)}
+.file:hover{transform:translateY(-2px)}
+.file .ic{width:36px;height:36px;border-radius:10px;background:var(--cream);display:grid;place-items:center;color:var(--ink-2)}
+.file b{font-weight:500;font-size:14.5px}
+.file span{font-size:12.5px;color:var(--muted)}
+.file .state{margin-top:auto;font-size:12px;display:flex;align-items:center;gap:6px;color:var(--sage)}
+.file .state::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.file.opt .state{color:var(--muted)}
+
+/* ---------- 2 reconcile (hero) ---------- */
+.hero-figure{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.matchbar{margin-top:30px;max-width:620px}
+.matchbar .bar{height:6px;border-radius:99px;background:var(--line-2);overflow:hidden;display:flex}
+.matchbar .bar i{display:block;height:100%}
+.matchbar .legend{margin-top:10px;display:flex;gap:18px;font-size:12.5px;color:var(--muted)}
+.matchbar .legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:var(--c)}
+
+.buckets{margin-top:44px;display:inline-flex;padding:5px;border-radius:99px;background:var(--paper-2);border:1px solid var(--line-2);gap:4px;flex-wrap:wrap}
+.bucket{padding:10px 18px;border-radius:99px;font-size:13.5px;color:var(--ink-2);display:flex;gap:10px;align-items:center;transition:all .3s var(--ease)}
+.bucket .amt{font-variant-numeric:tabular-nums;color:var(--muted)}
+.bucket.on{background:var(--paper);color:var(--ink);box-shadow:var(--shadow)}
+.bucket.on .amt{color:var(--burgundy)}
+.bucket-note{margin-top:14px;font-size:13.5px;color:var(--muted)}
+
+.issues{margin-top:22px;overflow:hidden}
+.issue{display:grid;grid-template-columns:28px 1.4fr 1fr auto 20px;align-items:center;gap:18px;padding:18px 24px;border-bottom:1px solid var(--line-2);width:100%;text-align:left;transition:background .25s}
+.issue:last-child{border-bottom:0}
+.issue:hover{background:var(--cream)}
+.issue .rank{font-family:var(--serif);color:var(--muted);font-size:15px}
+.issue .sup b{font-weight:500;display:block}
+.issue .sup span{font-size:12.5px;color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:99px;background:var(--burgundy-soft);color:var(--burgundy);width:max-content}
+.tag.sage{background:var(--sage-soft);color:var(--sage)}
+.tag.ochre{background:var(--ochre-soft);color:var(--ochre)}
+.tag.ink{background:var(--paper-2);color:var(--ink-2)}
+.issue .amt{font-family:var(--serif);font-size:19px;font-variant-numeric:tabular-nums}
+.issue .chev{color:var(--muted);transition:transform .25s var(--ease)}
+.issue:hover .chev{transform:translateX(3px);color:var(--burgundy)}
+.issue.top{background:linear-gradient(90deg,var(--burgundy-soft),transparent 60%)}
+
+/* ---------- 3 evidence ---------- */
+.crumb{font-size:13px;color:var(--muted);margin-bottom:22px;display:flex;gap:8px;align-items:center}
+.crumb button{color:var(--ink-2);text-decoration:underline;text-underline-offset:3px}
+.compare{margin-top:36px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.col{padding:22px}
+.col h4{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:16px;display:flex;justify-content:space-between}
+.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line-2);font-size:13.5px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--muted)}
+.kv b{font-weight:500;font-variant-numeric:tabular-nums}
+.col.missing{background:repeating-linear-gradient(135deg,var(--paper),var(--paper) 10px,var(--burgundy-soft) 10px,var(--burgundy-soft) 11px);border-color:#E8CFCF}
+.missing-box{display:grid;place-items:center;text-align:center;min-height:176px;gap:6px}
+.missing-box b{font-family:var(--serif);font-weight:500;font-size:19px;color:var(--burgundy)}
+.missing-box span{font-size:12.5px;color:var(--ink-2);max-width:24ch}
+.reason{margin-top:18px;padding:26px 28px;display:grid;grid-template-columns:1fr auto;gap:28px;align-items:start}
+.reason p{font-family:var(--serif);font-size:20px;line-height:1.45;font-weight:400;max-width:52ch}
+.reason p mark{background:none;color:var(--burgundy);font-style:italic}
+.ims{display:grid;gap:10px;min-width:230px}
+.ims small{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;padding:4px;border-radius:99px;background:var(--paper-2);border:1px solid var(--line-2)}
+.seg button{flex:1;padding:8px 12px;border-radius:99px;font-size:13px;color:var(--ink-2)}
+.seg button.on{background:var(--ink);color:#F7F1E8}
+.ims .hint{font-size:12px;color:var(--sage);display:flex;gap:6px;align-items:center}
+
+/* ---------- 4 log ---------- */
+.log-wrap{margin-top:40px;display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start}
+.timeline{padding:10px 26px}
+.entry{display:grid;grid-template-columns:auto 1fr auto;gap:16px;padding:18px 0;border-bottom:1px solid var(--line-2);align-items:start}
+.entry:last-child{border-bottom:0}
+.entry time{font-size:12px;color:var(--muted);width:46px;padding-top:2px}
+.entry b{font-weight:500}
+.entry p{font-size:13px;color:var(--muted);margin-top:2px}
+.entry .eff{font-family:var(--serif);font-size:16px;font-variant-numeric:tabular-nums;text-align:right}
+.entry .eff small{display:block;font-family:var(--sans);font-size:11.5px;color:var(--muted)}
+.entry.new{animation:glow 2.2s var(--ease)}
+@keyframes glow{0%{background:var(--burgundy-soft)}100%{background:transparent}}
+.claim{padding:26px}
+.claim .big{font-family:var(--serif);font-size:38px;letter-spacing:-.02em;margin:6px 0 4px}
+.claim .row{display:flex;justify-content:space-between;font-size:13.5px;padding:10px 0;border-top:1px solid var(--line-2)}
+.claim .row span{color:var(--muted)}
+
+/* ---------- 5 deeper ---------- */
+.deeper{margin-top:40px;display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+.anomaly{padding:28px}
+.anomaly .amt{font-family:var(--serif);font-size:34px;letter-spacing:-.02em;margin:8px 0 18px}
+.reasons{list-style:none;display:grid;gap:10px}
+.reasons li{display:flex;gap:12px;align-items:center;font-size:14px;padding:12px 14px;border-radius:var(--r-sm);background:var(--cream)}
+.reasons li i{font-style:normal;font-family:var(--serif);color:var(--burgundy);width:42px}
+.side-stack{display:grid;gap:18px}
+.benford{padding:24px}
+.benford svg{width:100%;height:auto;margin-top:12px}
+.chaos{padding:24px;background:var(--ink);color:#EDE6DA;border-color:var(--ink)}
+.chaos h3{color:#F7F1E8}
+.chaos p{font-size:13.5px;color:#B7B3AA;margin:6px 0 16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips span{font-size:12px;padding:6px 11px;border-radius:99px;border:1px solid #3A4256;color:#D9D2C5}
+.small-note{font-size:12.5px;color:var(--muted);margin-top:14px}
+
+/* ---------- 6 ask ---------- */
+.ask{margin-top:36px;max-width:760px}
+.q{display:flex;justify-content:flex-end}
+.q span{background:var(--ink);color:#F7F1E8;padding:12px 18px;border-radius:18px 18px 4px 18px;font-size:14.5px;max-width:70%}
+.a{margin-top:16px;padding:24px 26px;border-radius:18px 18px 18px 4px}
+.a .who{display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.a .who .mark{width:22px;height:22px;font-size:12px;border-radius:7px}
+.a p{font-family:var(--serif);font-size:19px;line-height:1.5}
+.a p b{font-weight:500;color:var(--burgundy)}
+.verified{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
+.verified span{font-size:12px;display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border-radius:99px;background:var(--sage-soft);color:var(--sage)}
+.composer{margin-top:28px;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 22px;border-radius:99px;background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow)}
+.composer input{flex:1;border:0;background:none;font:inherit;color:var(--ink);outline:none;min-width:0}
+.composer input::placeholder{color:var(--muted)}
+.suggest{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.suggest button{font-size:13px;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);transition:background .2s}
+.suggest button:hover{background:var(--paper-2)}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;right:28px;top:22px;transform:translateY(-12px);opacity:0;pointer-events:none;background:var(--ink);color:#F3ECE0;padding:12px 18px 12px 14px;border-radius:99px;font-size:13.5px;display:flex;gap:10px;align-items:center;transition:all .5s var(--ease);box-shadow:0 18px 40px -16px rgba(27,34,50,.6)}
+.toast i{width:20px;height:20px;border-radius:50%;background:var(--burgundy);display:grid;place-items:center;font-style:normal;font-size:11px}
+.toast.on{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){
+  .files{grid-template-columns:repeat(2,1fr)}
+  .deeper,.log-wrap{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  aside{min-width:0}
+  aside{position:static;height:auto;padding:16px;border-right:0;border-bottom:1px solid var(--line)}
+  .brand{padding-bottom:12px}
+  .journey-label,.aside-foot,.step .s{display:none}
+  .steps{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .step{flex:none;width:auto;padding:8px 12px 8px 8px;gap:8px;align-items:center}
+  .step::after{display:none}
+  .step .t{font-size:13px;white-space:nowrap}
+  .topbar{padding:16px}
+  .search{display:none}
+  .stage{padding:16px 16px 48px}
+  .compare{grid-template-columns:1fr}
+  .reason{grid-template-columns:1fr}
+  .issue{grid-template-columns:1fr auto;gap:8px 12px;padding:16px}
+  .issue .rank,.issue .chev{display:none}
+  .issue .tag{grid-row:2}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Sidebar: the journey ===== -->
+  <aside>
+    <div class="brand"><div class="mark">R</div><b>Rekora</b></div>
+    <div class="journey-label">September close</div>
+    <ul class="steps" id="steps"></ul>
+
+    <div class="aside-foot">
+      <div class="client">
+        <div class="avatar">MD</div>
+        <div><b>Mehra Distributors</b><span>GSTIN 27AAKFM…1Z5</span></div>
+      </div>
+      <div class="privacy"><i></i>Runs locally. Nothing leaves this laptop.</div>
+      <button class="unlock-all" id="unlockAll">Demo: open every step</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="period">
+        <span class="pill">Return period · Sep 2026</span>
+        <span class="progress" id="progress">Step 1 of 6</span>
+      </div>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        Search suppliers, invoices…<kbd>⌘K</kbd>
+      </div>
+    </div>
+
+    <div class="stage">
+
+      <!-- ===== 1. Import ===== -->
+      <section class="screen" data-step="0">
+        <div class="eyebrow" style="--i:0">Step one</div>
+        <h1 style="--i:1">Let's bring in <em>September.</em></h1>
+        <p class="lede" style="--i:2">Rekora reads the three records that never agree: your books, the GSTR-2B and the bank. Drop them in, or start with the demo month.</p>
+
+        <div class="files" style="--i:3">
+          <div class="file card">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg></div>
+            <div><b>Purchase register</b><br><span>CSV from Tally or any ERP</span></div>
+            <div class="state">369 bills ready</div>
+          </div>
+          <div class="file card">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 4 7v6c0 4.5 3.4 7.4 8 8 4.6-.6 8-3.5 8-8V7z"/></svg></div>
+            <div><b>GSTR-2B</b><br><span>Portal JSON or CSV</span></div>
+            <div class="state">362 entries ready</div>
+          </div>
+          <div class="file card">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 10 12 4l9 6M5 10v9M19 10v9M9 10v9M15 10v9M3 21h18"/></svg></div>
+            <div><b>Bank statement</b><br><span>CSV, any bank</span></div>
+            <div class="state">339 payments ready</div>
+          </div>
+          <div class="file card opt">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg></div>
+            <div><b>Sales register</b><br><span>Optional, for context</span></div>
+            <div class="state">Optional</div>
+          </div>
+        </div>
+
+        <div class="actions" style="--i:4">
+          <button class="btn btn-primary" data-advance>Reconcile September <span>→</span></button>
+          <button class="btn btn-ghost">Upload my own files</button>
+        </div>
+
+        <div class="next" style="--i:5"><span class="k">Up next</span><b>Reconcile</b> · every mismatch, priced in ₹ <span class="arrow">→</span></div>
+      </section>
+
+      <!-- ===== 2. Reconcile (the core) ===== -->
+      <section class="screen" data-step="1">
+        <div class="eyebrow" style="--i:0">Reconciled in 1.8 seconds</div>
+        <h1 style="--i:1"><span class="num">₹4,82,310</span> of credit <em>needs you</em> this month.</h1>
+        <p class="lede" style="--i:2">Everything else matched across books, GSTR-2B and bank. Here's what's left, largest rupee impact first.</p>
+
+        <div class="matchbar" style="--i:3">
+          <div class="bar"><i style="width:88%;background:var(--sage)"></i><i style="width:5%;background:var(--burgundy)"></i><i style="width:4%;background:var(--ochre)"></i><i style="width:3%;background:var(--ink-2)"></i></div>
+          <div class="legend">
+            <span style="--c:var(--sage)">352 matched</span>
+            <span style="--c:var(--burgundy)">At risk</span>
+            <span style="--c:var(--ochre)">To reverse</span>
+            <span style="--c:var(--ink-2)">To review</span>
+          </div>
+        </div>
+
+        <div style="--i:4">
+          <div class="buckets" id="buckets">
+            <button class="bucket on" data-b="risk">ITC at risk <span class="amt num">₹2,64,120</span></button>
+            <button class="bucket" data-b="review">Potential credit <span class="amt num">₹96,450</span></button>
+            <button class="bucket" data-b="reverse">ITC to reverse <span class="amt num">₹1,21,740</span></button>
+          </div>
+          <p class="bucket-note" id="bucketNote">In your books, but not backed by GSTR-2B. Chase the supplier before you claim.</p>
+        </div>
+
+        <div class="issues card" style="--i:5" id="issueList"></div>
+
+        <div class="next" style="--i:6"><span class="k">Up next</span><b>Open the top issue</b> · see all three records side by side <span class="arrow">→</span></div>
+      </section>
+
+      <!-- ===== 3. Evidence ===== -->
+      <section class="screen" data-step="2">
+        <div class="crumb" style="--i:0"><button data-go="1">Reconcile</button> / ITC at risk / SEC/0118</div>
+        <div class="eyebrow" style="--i:0">Missing in GSTR-2B</div>
+        <h1 style="--i:1">Sood Electric Co. hasn't <em>reported</em> this bill.</h1>
+
+        <div class="compare" style="--i:2">
+          <div class="col card">
+            <h4>Your books <span class="tag sage">Found</span></h4>
+            <div class="kv"><span>Invoice</span><b>SEC/0118</b></div>
+            <div class="kv"><span>Date</span><b>14 Sep 2026</b></div>
+            <div class="kv"><span>Taxable value</span><b>₹7,92,000</b></div>
+            <div class="kv"><span>IGST @ 18%</span><b>₹1,42,560</b></div>
+          </div>
+          <div class="col card missing">
+            <h4>GSTR-2B <span class="tag">Not found</span></h4>
+            <div class="missing-box">
+              <b>No matching entry</b>
+              <span>Checked 362 entries, including near-miss invoice numbers.</span>
+            </div>
+          </div>
+          <div class="col card">
+            <h4>Bank <span class="tag sage">Paid</span></h4>
+            <div class="kv"><span>Date</span><b>22 Sep 2026</b></div>
+            <div class="kv"><span>Mode</span><b>NEFT</b></div>
+            <div class="kv"><span>Payee</span><b>SOOD ELECTRIC CO</b></div>
+            <div class="kv"><span>Amount</span><b>₹9,34,560</b></div>
+          </div>
+        </div>
+
+        <div class="reason card" style="--i:3">
+          <div>
+            <div class="eyebrow" style="margin-bottom:10px">Why it matters</div>
+            <p>You've paid this bill in full, but Sood Electric hasn't filed it in GSTR-1 yet. They <mark>filed late in 4 of the last 7 months</mark>. Claiming ₹1,42,560 now risks a notice. Hold it until it appears.</p>
+          </div>
+          <div class="ims">
+            <small>IMS action</small>
+            <div class="seg" id="ims"><button>Accept</button><button class="on">Pending</button><button>Reject</button></div>
+            <span class="hint">● Rekora recommends Pending</span>
+          </div>
+        </div>
+
+        <div class="actions" style="--i:4">
+          <button class="btn btn-wine" data-advance>Hold credit & log decision</button>
+          <button class="btn btn-ghost">Draft note to supplier</button>
+        </div>
+
+        <div class="next" style="--i:5"><span class="k">Up next</span><b>Decision log</b> · every call, with its evidence and effect on the claim <span class="arrow">→</span></div>
+      </section>
+
+      <!-- ===== 4. Decision log ===== -->
+      <section class="screen" data-step="3">
+        <div class="eyebrow" style="--i:0">Decision log</div>
+        <h1 style="--i:1">Every call you make, <em>on the record.</em></h1>
+        <p class="lede" style="--i:2">Each decision is saved with its evidence and its effect on this month's claim, ready to hand to an auditor.</p>
+
+        <div class="log-wrap" style="--i:3">
+          <div class="timeline card">
+            <div class="entry new">
+              <time>Now</time>
+              <div><b>Held · Sood Electric Co · SEC/0118</b><p>Missing in GSTR-2B. IMS set to Pending. Bank payment attached.</p></div>
+              <div class="eff num">−₹1,42,560<small>deferred</small></div>
+            </div>
+            <div class="entry">
+              <time>10:42</time>
+              <div><b>Reversed · Shah Metals · SM/0207</b><p>Unpaid for 186 days. Reversed with interest.</p></div>
+              <div class="eff num">−₹54,180<small>reversed</small></div>
+            </div>
+            <div class="entry">
+              <time>10:31</time>
+              <div><b>Booked · Tandon Lighting · TL/0391</b><p>Was in GSTR-2B but missing from books. Now booked.</p></div>
+              <div class="eff num">+₹64,590<small>added</small></div>
+            </div>
+            <div class="entry">
+              <time>10:18</time>
+              <div><b>Confirmed · Bansal Lighting</b><p>GSTIN typo checked by a person. Same supplier.</p></div>
+              <div class="eff num">₹0<small>no change</small></div>
+            </div>
+          </div>
+
+          <div class="claim card">
+            <div class="eyebrow" style="margin-bottom:4px">Claimable ITC · Sep</div>
+            <div class="big num">₹38,14,920</div>
+            <p class="small-note" style="margin:0 0 14px">Up to date with every decision</p>
+            <div class="row"><span>Decided</span><b class="num">4 of 17</b></div>
+            <div class="row"><span>Deferred</span><b class="num">₹1,42,560</b></div>
+            <div class="row"><span>Reversed</span><b class="num">₹54,180</b></div>
+            <div class="actions" style="margin-top:18px"><button class="btn btn-ghost">Export log</button></div>
+          </div>
+        </div>
+
+        <div class="actions" style="--i:4"><button class="btn btn-primary" data-advance>Look deeper <span>→</span></button></div>
+        <div class="next" style="--i:5"><span class="k">Up next</span><b>Look deeper</b> · unusual bills the rules can't see <span class="arrow">→</span></div>
+      </section>
+
+      <!-- ===== 5. Look deeper ===== -->
+      <section class="screen" data-step="4">
+        <div class="eyebrow" style="--i:0">Beyond the rules</div>
+        <h1 style="--i:1">One bill looks <em>out of character.</em></h1>
+        <p class="lede" style="--i:2">An anomaly model reads every bill against its supplier's history. It flags bills for review and never changes a rupee figure.</p>
+
+        <div class="deeper" style="--i:3">
+          <div class="anomaly card">
+            <span class="tag ink">Unusual bill · Shah Metals · SM/0219</span>
+            <div class="amt num">₹6,48,000</div>
+            <ul class="reasons">
+              <li><i>3.1×</i>this supplier's usual bill size</li>
+              <li><i>₹000</i>Rounded to the thousand. Their bills usually aren't</li>
+              <li><i>Sun</i>Dated on a Sunday. Their bills never have been</li>
+            </ul>
+            <div class="actions" style="margin-top:22px">
+              <button class="btn btn-ghost">Looks fine</button>
+              <button class="btn btn-wine">Send for review</button>
+            </div>
+          </div>
+
+          <div class="side-stack">
+            <div class="benford card">
+              <h3>Benford check</h3>
+              <p class="small-note" style="margin-top:4px">First digits across all 369 bills match the expected pattern.</p>
+              <svg viewBox="0 0 270 90" aria-label="First-digit distribution against Benford's expected curve">
+                <g fill="#D9CDBB">
+                  <rect x="6" y="18" width="20" height="62" rx="3"/><rect x="36" y="44" width="20" height="36" rx="3"/><rect x="66" y="54" width="20" height="26" rx="3"/>
+                  <rect x="96" y="59" width="20" height="21" rx="3"/><rect x="126" y="63" width="20" height="17" rx="3"/><rect x="156" y="66" width="20" height="14" rx="3"/>
+                  <rect x="186" y="68" width="20" height="12" rx="3"/><rect x="216" y="69" width="20" height="11" rx="3"/><rect x="246" y="70" width="20" height="10" rx="3"/>
+                </g>
+                <polyline fill="none" stroke="#7A2335" stroke-width="1.6" points="16,16 46,46 76,57 106,61 136,64 166,66 196,68 226,69 256,70"/>
+                <line x1="0" y1="80.5" x2="270" y2="80.5" stroke="#E5DCCD"/>
+              </svg>
+            </div>
+            <div class="chaos card">
+              <h3>Chaos Mode</h3>
+              <p>Break a clean bill on purpose and watch Rekora catch it, or reformat it harmlessly and watch it stay quiet.</p>
+              <div class="chips"><span>Wrong rate</span><span>GSTIN typo</span><span>Duplicate</span><span>IGST ↔ CGST</span><span>Short payment</span><span>Drop from 2B</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions" style="--i:4"><button class="btn btn-primary" data-advance>Ask Rekora <span>→</span></button></div>
+        <div class="next" style="--i:5"><span class="k">Up next</span><b>Ask Rekora</b> · plain-language questions, checked answers <span class="arrow">→</span></div>
+      </section>
+
+      <!-- ===== 6. Ask ===== -->
+      <section class="screen" data-step="5">
+        <div class="eyebrow" style="--i:0">Ask Rekora</div>
+        <h1 style="--i:1">Ask your month <em>anything.</em></h1>
+        <p class="lede" style="--i:2">Answers come from the reconciled data. Every ₹ figure is checked against the engine before you see it.</p>
+
+        <div class="ask" style="--i:3">
+          <div class="q"><span>How much credit is at risk from suppliers who file late?</span></div>
+          <div class="a card">
+            <div class="who"><div class="mark">R</div>Rekora</div>
+            <p><b>₹1,64,460</b> across <b>2 suppliers</b>. Sood Electric Co accounts for ₹1,42,560 of it, a single bill you've already held. Thakur Steel Traders makes up the remaining ₹21,900.</p>
+            <div class="verified"><span>✓ ₹1,64,460 matches engine</span><span>✓ ₹1,42,560 matches engine</span></div>
+          </div>
+        </div>
+
+        <div class="ask" style="--i:4">
+          <div class="composer"><input placeholder="Ask about suppliers, credit, deadlines…"><button class="btn btn-primary" style="padding:10px 18px">Ask</button></div>
+          <div class="suggest">
+            <button>Which bills should I chase first?</button>
+            <button>What will I claim if I accept everything pending?</button>
+            <button>Summarise September for my client</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><i>✓</i><span></span></div>
+
+<script>
+const STEPS = [
+  {t:"Bring in your month", s:"Books, GSTR-2B, bank"},
+  {t:"Reconcile", s:"Mismatches, priced in ₹"},
+  {t:"Review an issue", s:"Three records, side by side"},
+  {t:"Decision log", s:"Every call, on record"},
+  {t:"Look deeper", s:"Anomalies, Chaos Mode"},
+  {t:"Ask Rekora", s:"Checked answers"}
+];
+const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+let current = 0, unlocked = 0;
+const stepsEl = document.getElementById('steps');
+
+function renderSteps(fresh){
+  stepsEl.innerHTML = STEPS.map((st,i)=>{
+    const cls = ['step', i>unlocked?'locked':'', i===current?'active':'', i<unlocked&&i!==current?'done':'', i===fresh?'just-unlocked':''].join(' ');
+    const dot = i>unlocked ? LOCK : (i<unlocked&&i!==current ? '✓' : i+1);
+    return `<li><button class="${cls}" data-go="${i}" ${i>unlocked?'disabled':''}><span class="dot">${dot}</span><span><span class="t">${st.t}</span><span class="s">${st.s}</span></span></button></li>`;
+  }).join('');
+}
+
+function go(i){
+  if(i>unlocked) return;
+  current = i;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', +s.dataset.step===i));
+  document.getElementById('progress').textContent = `Step ${i+1} of ${STEPS.length}`;
+  renderSteps();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function advance(){
+  const next = current+1;
+  if(next>=STEPS.length) return;
+  const isNew = next>unlocked;
+  if(isNew) unlocked = next;
+  go(next);
+  if(isNew){ renderSteps(next); toast(`${STEPS[next].t} is ready`); }
+}
+
+let tt;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.querySelector('span').textContent = msg;
+  t.classList.add('on'); clearTimeout(tt);
+  tt = setTimeout(()=>t.classList.remove('on'), 2400);
+}
+
+document.addEventListener('click', e=>{
+  const g = e.target.closest('[data-go]'); if(g){ go(+g.dataset.go); return; }
+  if(e.target.closest('[data-advance]')) advance();
+});
+document.getElementById('unlockAll').onclick = ()=>{ unlocked = STEPS.length-1; renderSteps(); toast('Every step is open'); };
+
+/* ---- buckets + issue list ---- */
+const ISSUES = {
+  risk:[
+    {s:"Sood Electric Co", i:"SEC/0118 · 14 Sep", tag:"Missing in GSTR-2B", c:"", a:"₹1,42,560", open:true},
+    {s:"Thakur Switchgear", i:"TSW/0412 · 09 Sep", tag:"Amount mismatch", c:"", a:"₹58,410"},
+    {s:"Bansal Lighting", i:"BL/0077 · 21 Sep", tag:"GSTIN typo · needs a person", c:"ink", a:"₹41,250"},
+    {s:"Thakur Steel Traders", i:"TSTB/0231 · 03 Sep", tag:"Missing in GSTR-2B", c:"", a:"₹21,900"}
+  ],
+  review:[
+    {s:"Tandon Lighting", i:"TL/0391 · 11 Sep", tag:"Missing in books", c:"sage", a:"₹64,590"},
+    {s:"Mathur Supplies", i:"MSA/0144 · 26 Sep", tag:"Missing in books", c:"sage", a:"₹31,860"}
+  ],
+  reverse:[
+    {s:"Shah Metals", i:"SM/0207 · 22 Mar", tag:"Unpaid 180+ days", c:"ochre", a:"₹54,180"},
+    {s:"Mathur Supplies", i:"MSA/0139 · 18 Sep", tag:"Duplicate bill", c:"ochre", a:"₹48,636"},
+    {s:"Tandon Lighting", i:"TL/0388 · 06 Sep", tag:"Wrong tax type", c:"ochre", a:"₹18,924"}
+  ]
+};
+const NOTES = {
+  risk:"In your books, but not backed by GSTR-2B. Chase the supplier before you claim.",
+  review:"In GSTR-2B, but not in your books. Check it, then book it.",
+  reverse:"Unpaid for 180+ days, duplicated, wrong rate or wrong tax type. Reverse before filing."
+};
+function renderIssues(b){
+  document.getElementById('issueList').innerHTML = ISSUES[b].map((x,k)=>`
+    <button class="issue ${x.open?'top':''}" ${x.open?'data-advance':''}>
+      <span class="rank">${k+1}</span>
+      <span class="sup"><b>${x.s}</b><span>${x.i}</span></span>
+      <span class="tag ${x.c}">${x.tag}</span>
+      <span class="amt num">${x.a}</span>
+      <span class="chev">→</span>
+    </button>`).join('');
+  document.getElementById('bucketNote').textContent = NOTES[b];
+}
+document.getElementById('buckets').addEventListener('click', e=>{
+  const b = e.target.closest('.bucket'); if(!b) return;
+  document.querySelectorAll('.bucket').forEach(x=>x.classList.toggle('on', x===b));
+  renderIssues(b.dataset.b);
+});
+document.getElementById('ims').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#ims button').forEach(x=>x.classList.toggle('on', x===b));
+});
+
+renderIssues('risk');
+go(0);
+</script>
+</body>
+</html>
