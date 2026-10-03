@@ -301,6 +301,7 @@ table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display);
 .ref { display:inline-flex; align-items:center; border-radius:6px; padding:0 7px; margin:1px 2px; font-size:13px; font-weight:600; background:var(--mint-bg); color:var(--mint); }
 .verified { display:flex; align-items:center; gap:6px; margin-top:8px; font-size:12.5px; color:var(--faint); }
 .verified svg { width:14px; height:14px; stroke:var(--mint); fill:none; stroke-width:2.2; }
+.verified.failed, .verified.failed svg { color:var(--red); stroke:var(--red); }
 .suggest { display:flex; flex-wrap:wrap; gap:7px; margin-top:14px; }
 .suggest button { font-size:13.5px; border:1px solid var(--line-2); border-radius:999px; padding:6px 12px; color:var(--text); text-align:left; }
 .suggest button:hover { background:var(--surface-2); }
@@ -460,7 +461,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
         </article>
         <div class="buckets" role="group" aria-label="Money buckets, click to filter">
           <button class="bucket risk" type="button" data-filter="risk"><span class="lab"><i></i>ITC at risk</span><strong class="num" id="bRisk">₹0</strong><span class="open" id="oRisk"></span><small>In your books, not backed by GSTR-2B</small></button>
-          <button class="bucket recover" type="button" data-filter="recover"><span class="lab"><i></i>Recoverable ITC</span><strong class="num" id="bRecover">₹0</strong><span class="open" id="oRecover"></span><small>In GSTR-2B, missing from your books</small></button>
+          <button class="bucket recover" type="button" data-filter="recover"><span class="lab"><i></i>Potential credit to review</span><strong class="num" id="bRecover">₹0</strong><span class="open" id="oRecover"></span><small>In GSTR-2B, not in your books. Check before you claim.</small></button>
           <button class="bucket reverse" type="button" data-filter="reverse"><span class="lab"><i></i>ITC to reverse</span><strong class="num" id="bReverse">₹0</strong><span class="open" id="oReverse"></span><small>Unpaid 180+ days, duplicates, wrong rate or tax type</small></button>
         </div>
       </div>
@@ -486,7 +487,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
         <div class="chips" role="group" aria-label="Filter by bucket" id="chips">
           <button class="chip" data-filter="all" aria-pressed="true">All</button>
           <button class="chip" data-filter="risk" aria-pressed="false"><i style="background:var(--amber)"></i>At risk</button>
-          <button class="chip" data-filter="recover" aria-pressed="false"><i style="background:var(--mint)"></i>Recoverable</button>
+          <button class="chip" data-filter="recover" aria-pressed="false"><i style="background:var(--mint)"></i>Potential credit</button>
           <button class="chip" data-filter="reverse" aria-pressed="false"><i style="background:var(--red)"></i>To reverse</button>
           <button class="chip" data-filter="review" aria-pressed="false"><i style="background:var(--plum)"></i>Review</button>
         </div>
@@ -517,7 +518,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
           <div class="step"><i>1</i><div>IGST credit goes first<span>Against IGST, then CGST, then SGST.</span></div></div>
           <div class="step"><i>2</i><div>CGST and SGST never cross<span>CGST credit pays CGST then IGST; SGST credit pays SGST then IGST.</span></div></div>
           <div class="step"><i>3</i><div>Whatever is left is paid in cash<span>That figure feeds GSTR-3B Table 6.1.</span></div></div>
-          <div class="step"><i>4</i><div>Excess claims attract interest<span>Rekora keeps the claim at or below GSTR-2B so a DRC-01C notice never fires.</span></div></div>
+          <div class="step"><i>4</i><div>Excess claims can attract interest<span>Rekora highlights differences for review before you file. You decide what to claim.</span></div></div>
         </div></div>
       </div>
     </section>
@@ -541,7 +542,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
 <div class="scrim" id="scrim"></div>
 
 <aside class="drawer" id="ask" aria-labelledby="askTitle" role="dialog" aria-modal="true">
-  <div class="dr-head"><div><h2 id="askTitle">Ask Rekora</h2><p>Answers come from this month's reconciled data. Every rupee figure is checked against engine output.</p></div><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="dr-head"><div><h2 id="askTitle">Ask Rekora</h2><p>Answers come from this month's reconciled data. Each displayed rupee figure is checked against the current engine results.</p></div><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="dr-body"><div class="msgs" id="msgs"></div><div class="suggest" id="suggest"></div></div>
   <div class="dr-foot"><form class="ask-form" id="askForm"><label class="sr" for="askInput">Your question</label><input id="askInput" placeholder="Ask about suppliers, issues or tax due" autocomplete="off"><button type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form></div>
 </aside>
@@ -705,7 +706,7 @@ function renderHero() {
   const t = S.totals;
   const fix = t.risk + t.reverse;
   $('#h1Amt').textContent = lakh(fix);
-  $('#introSub').innerHTML = `Rekora checked ${S.counts.total.toLocaleString('en-IN')} bills across your books, GSTR-2B and bank. You also left <b>${lakh(t.recover)}</b> of credit unclaimed.`;
+  $('#introSub').innerHTML = `Rekora checked ${S.counts.total.toLocaleString('en-IN')} bills across your books, GSTR-2B and bank. It found <b>${lakh(t.recover)}</b> of potential credit to review.`;
   animateNum($('#netPay'), t.net); animateNum($('#bRisk'), t.risk); animateNum($('#bRecover'), t.recover); animateNum($('#bReverse'), t.reverse);
   $('#outTax').textContent = inr(t.output); $('#eligTax').textContent = inr(t.eligible);
   const b = sumCount(S.scoped || S.groups);
@@ -742,7 +743,7 @@ function paintWaterfall(v, labels) {
     { k:['Credit in', 'your books'], c:'b-total', y0:F, y1:a1, lab:L(labels.books) },
     { k:['At risk', ''], c:'b-risk', y0:a2, y1:a1, lab:'−' + L(labels.risk) },
     { k:['To reverse', ''], c:'b-reverse', y0:a3, y1:a2, lab:'−' + L(labels.reverse) },
-    { k:['Recoverable', ''], c:'b-recover', y0:a3, y1:a4, lab:'+' + L(labels.recover) },
+    { k:['Potential credit', 'to review'], c:'b-recover', y0:a3, y1:a4, lab:'+' + L(labels.recover) },
     { k:['Credit you', 'can defend'], c:'b-final', y0:F, y1:v.eligible, lab:L(labels.eligible) },
   ];
   const bw = 92, gap = (W - 40 - bars.length * bw) / (bars.length - 1);
@@ -1029,12 +1030,41 @@ function scan(label, then) {
    ===================================================================== */
 const SUGGEST = ['Which suppliers put the most ITC at risk?', 'Why is Arora Wires flagged?', 'How much GST do I pay this month?', 'What should I do before 14 Oct?', 'Draft a follow-up to Gupta Steel'];
 function greet() {
-  addMsg('ai', `<p>Hi Aanya. September has <b>${S.groups.length} open issues</b> worth ${inr(S.groups.reduce((a, g) => a + g.impact, 0))} in this sample. Ask me anything about them.</p>`, 0);
+  addMsg('ai', `<p>This period has <b>${S.groups.length} open issues</b> worth ${inr(S.groups.reduce((a, g) => a + g.impact, 0))} in this sample. Ask me anything about them.</p>`, 0);
   $('#suggest').innerHTML = SUGGEST.map((q) => `<button type="button">${q}</button>`).join('');
 }
-function addMsg(who, html, figures) {
+function engineFigureValues() {
+  const values = new Set();
+  const add = (n) => { if (Number.isFinite(n)) values.add(Math.round(n)); };
+  Object.values(S.totals || {}).forEach(add);
+  add((S.totals?.risk || 0) + (S.totals?.reverse || 0));
+  const h = heads();
+  [h.itc, h.used, h.cash].forEach((part) => Object.values(part).forEach(add));
+  (S.groups || []).forEach((g) => { add(g.impact); (g.items || []).forEach((item) => Object.values(item).forEach(add)); });
+  [S.D.books, S.D.g2b, S.D.bank].forEach((rows) => (rows || []).forEach((row) => {
+    add(row.taxable); add(row.cgst); add(row.sgst); add(row.igst); add(row.amount);
+    if (row.taxable !== undefined) { add(tax(row)); add(total(row)); }
+  }));
+  return values;
+}
+function answerFigures(html) {
+  const text = html.replace(/<[^>]*>/g, ' ');
+  return [...text.matchAll(/₹\s*([\d,.]+)\s*(lakh|L)?/gi)].map((match) => {
+    const amount = Number(match[1].replace(/,/g, ''));
+    return /lakh|L/i.test(match[2] || '') ? Math.round(amount * 100000) : Math.round(amount);
+  }).filter(Number.isFinite);
+}
+function verifyAnswerFigures(html) {
+  const figures = answerFigures(html), available = engineFigureValues();
+  return { count:figures.length, verified:figures.every((figure) => available.has(figure)) };
+}
+function addMsg(who, html, verification) {
   const m = document.createElement('div'); m.className = 'msg ' + who; m.innerHTML = html;
-  if (who === 'ai' && figures) m.insertAdjacentHTML('beforeend', `<div class="verified"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>${figures} figure${figures > 1 ? 's' : ''} checked against engine output</div>`);
+  if (who === 'ai' && verification && verification.count) {
+    const icon = verification.verified ? '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M12 7v5m0 4h.01"/></svg>';
+    const text = verification.verified ? `${verification.count} figure${verification.count > 1 ? 's' : ''} checked against engine output` : 'Figure verification failed';
+    m.insertAdjacentHTML('beforeend', `<div class="verified ${verification.verified ? '' : 'failed'}">${icon}${text}</div>`);
+  }
   $('#msgs').appendChild(m); m.scrollIntoView({ block:'end', behavior:reduced ? 'auto' : 'smooth' });
   return m;
 }
@@ -1061,7 +1091,7 @@ function answer(q) {
   }
   if (/pay|payable|owe|liabil|how much|cash/.test(t)) {
     const h = heads(), T = S.totals;
-    return { html:`<p>Output tax is ${inr(T.output)} and credit you can defend is ${inr(T.eligible)}, so you pay <b>${inr(T.net)}</b> in cash: IGST ${inr(h.cash.igst)}, CGST ${inr(h.cash.cgst)}, SGST ${inr(h.cash.sgst)}.</p><p>That assumes you fix the ${lakh(T.risk + T.reverse)} flagged as at risk or to reverse.</p>` };
+    return { html:`<p>Output tax is ${inr(T.output)} and credit you can defend is ${inr(T.eligible)}, so you pay <b>${inr(T.net)}</b> in cash: IGST ${inr(h.cash.igst)}, CGST ${inr(h.cash.cgst)}, SGST ${inr(h.cash.sgst)}.</p><p>That assumes you fix the ${inr(T.risk + T.reverse)} flagged as at risk or to reverse.</p>` };
   }
   if (/before|14|ims|deadline|to do|todo|first|plan/.test(t)) {
     const pick = (types) => S.groups.filter((g) => types.includes(g.type));
@@ -1076,8 +1106,7 @@ function ask(q) {
   const wait = addMsg('ai', '<span class="typing"><i></i><i></i><i></i></span>');
   setTimeout(() => {
     const a = answer(q); wait.remove();
-    const figs = (a.html.replace(/<[^>]+>/g, ' ').match(/₹[\d,.]+/g) || []).length;
-    addMsg('ai', a.html, figs);
+    addMsg('ai', a.html, verifyAnswerFigures(a.html));
   }, reduced ? 50 : 650);
 }
 
@@ -1213,7 +1242,7 @@ function exportJSON() {
     sup_details:{ osup_det:{ iamt:o.igst, camt:o.cgst, samt:o.sgst } },
     itc_elg:{ itc_avl:[{ ty:'OTH', iamt:h.itc.igst, camt:h.itc.cgst, samt:h.itc.sgst }], itc_net:{ iamt:h.itc.igst, camt:h.itc.cgst, samt:h.itc.sgst } },
     tax_paid_cash:{ iamt:h.cash.igst, camt:h.cash.cgst, samt:h.cash.sgst, total:T.net },
-    rekora:{ itc_at_risk:T.risk, itc_to_reverse:T.reverse, itc_recoverable:T.recover, open_issues:S.groups.length } };
+    rekora:{ itc_at_risk:T.risk, itc_to_reverse:T.reverse, potential_credit_to_review:T.recover, open_issues:S.groups.length } };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(draft, null, 2)], { type:'application/json' }));
   a.download = `GSTR-3B_draft_${pm}${py}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
