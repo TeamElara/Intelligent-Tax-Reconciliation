@@ -261,8 +261,9 @@ function runEngine(D) {
   const byDate = live.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   // 2a: one payment for one bill, preferring a payment whose narration names the invoice.
   for (const b of byDate) {
-    const T = total(b), ps = avail(b.sup, b.date).filter((p) => Math.abs(p.amount - T) <= 1);
-    // Otherwise take one that doesn't name a different bill of this supplier.
+    const T = total(b), sibs = liveBy.get(b.sup);
+    // A payment far too late for this bill (over 120 days) but close to a later, same-amount bill belongs to the later one.
+    const ps = avail(b.sup, b.date).filter((p) => Math.abs(p.amount - T) <= 1 && !(days(b.date, p.date) > 120 && !refersTo(p, b.inv) && sibs.some((o) => o !== b && !o._p && o.date > b.date && o.date <= p.date && days(o.date, p.date) <= 90 && Math.abs(total(o) - T) <= 1)));
     const p = ps.find((x) => refersTo(x, b.inv)) || ps.find((x) => !liveBy.get(b.sup).some((o) => o !== b && refersTo(x, o.inv)));
     if (p) { usedP.add(p.id); b._p = [p.id]; }
   }

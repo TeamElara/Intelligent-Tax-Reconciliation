@@ -58,3 +58,9 @@ React + Vite front end, FastAPI + Pydantic, DuckDB/Polars for joins (SQLite in d
 
 ## What the accuracy numbers mean
 The generator plants 13 error types plus "trap" bills (invoice-format variants, ₹1 rounding, recurring same-amount bills, pre-switch rates, financial-year restarts, generic bank narrations) that must stay unflagged. The errors follow the rules the engine implements, so ~100% shows the engine is consistent with its own spec, not that it will score the same on real books. Say so if asked.
+
+## Upload flow (phase 4)
+- `ingest.js` parses CSVs in the browser (no server). Column names are matched loosely ("Invoice No.", "Taxable Value", "Narration"...); the file type is detected from its headers. Bad rows are skipped and reported; an unusable file leaves the current data untouched. `node tools/check-upload.js` proves the four demo CSVs give exactly the same issues as the bundled `data/demo.js`.
+- The dashboard boots on the bundled demo month (`data/demo.js`). `?demo=seed` shows the older built-in sample, whose headline totals are scaled by `BASE`. "Load demo month" (Sources) restores the demo; Reset returns to whatever was last loaded.
+- Totals are derived from the data: ITC in books = tax on bills dated in the return month; output tax = that month's row in the sales file; buckets count issues on that month's bills plus 180-day reversals of any age. Older-month issues stay in the queue with a note.
+- Known limits: the return month is the latest month in the files; the buyer's state is inferred from CGST+SGST bills; GSTR-2B is read from CSV, not the portal JSON yet; no sales register means output tax is 0.

@@ -62,6 +62,7 @@ function variantOf(R, inv) {
 /* ---------- the generator ---------- */
 function generate(cfg) {
   const R = rng(cfg.seed);
+  const scale = cfg.rateScale || 1, plantFrom = cfg.plantFrom || '0000';
   const asOf = cfg.asOf, buyerState = E.BUYER.state;
   const sup = {}, keys = [];
   const used = new Set();
@@ -70,7 +71,7 @@ function generate(cfg) {
     const key = 's' + pad(i, 3), state = R.pick(STATE_POOL), med = Math.max(8000, R.logn(cfg.medianBill, .9)), sig = .3;
     const sl = R.chance(.18);
     sup[key] = { name, gstin:genGstin(R, state), base:R.int(5, 30), bills:0, filing:R.chance(.08) ? 'Filed late' : 'On time', late:false,
-      med, sig, terms:R.pick([30, 45, 60]), pfx:name.split(' ').map((w) => w[0]).join('').toUpperCase().padEnd(2, 'X').slice(0, 3) + String.fromCharCode(65 + (i % 26)),
+      med, sig, terms:R.pick(cfg.terms || [30, 45, 60]), pfx:name.split(' ').map((w) => w[0]).join('').toUpperCase().padEnd(2, 'X').slice(0, 3) + String.fromCharCode(65 + (i % 26)),
       style:R.pick(['-', '/']), hsn:sl ? R.pick(SLAB_HSN) : R.pick(HSN_CODES), lam:cfg.billsPerMonth * Math.exp(.4 * R.normal()) };
     sup[key].late = sup[key].filing === 'Filed late';
     sup[key].hist = Array.from({ length:7 }, () => Math.max(5000, Math.round(R.logn(med, sig) / 10) * 10));
@@ -86,7 +87,8 @@ function generate(cfg) {
   /* 1. clean bills */
   const months = monthsBetween(cfg.from, cfg.to);
   for (const [y, m] of months) for (const k of keys) {
-    const s = sup[k]; const n = Math.max(1, Math.round(s.lam * (.7 + .6 * R.next())));
+    const s = sup[k]; const isLast = y === months[months.length - 1][0] && m === months[months.length - 1][1];
+    const n = Math.max(1, Math.round(s.lam * (.7 + .6 * R.next()) * (isLast && cfg.lastMonthMult ? cfg.lastMonthMult : 1)));
     for (let j = 0; j < n; j++) {
       const date = `${y}-${pad(m, 2)}-${pad(R.int(1, 27), 2)}`;
       mkBill(k, date, null);
@@ -124,20 +126,18 @@ function generate(cfg) {
 
   /* 2. pair-wise combined payments first (they consume two neighbouring bills of one supplier) */
   const bySup = new Map(); for (const bl of bills) { if (!bySup.has(bl.b.sup)) bySup.set(bl.b.sup, []); bySup.get(bl.b.sup).push(bl); }
-  for (const list of bySup.values()) { list.sort((x, y) => (x.b.date < y.b.date ? -1 : x.b.date > y.b.date ? 1 : 0)); for (let i = 0; i + 1 < list.length; i++) {
-    const a = list[i], c = list[i + 1];
-    if (a.planted || c.planted || a.twin || c.twin || list[i + 1].twin) continue;
-    if (days2(a.b.date, c.b.date) > 20 || addDays(c.b.date, 40) > asOf) continue;
-    if (R.chance(RATES.combined)) {
-      const s = sup[a.b.sup], date = addDays(c.b.date > a.b.date ? c.b.date : a.b.date, R.int(10, 25));
-      a.planted = c.planted = 'combined';
-      a.pays = []; c.pays = [];
-      const pay = { id:'P' + a.b.id.slice(1) + 'c', date, amount:total(a.b) + total(c.b), ref:`${R.pick(modes)} ${s.name.toUpperCase()} SETTLEMENT` };
-      a.pays.push(pay);
-      labels.push({ type:'combined', ids:[a.b.id, c.b.id], impact:tax(a.b) + tax(c.b), bucket:'confirm' });
-      i++;
-    }
-  } }
+  for (const list of bySup.values()) list.sort((x, y) => (x.b.date < y.b.date ? -1 : x.b.date > y.b.date ? 1 : 0));
+  function plantCombined(a, c) {
+    if (a.planted || c.planted || a.twin || c.twin || a.b.date < plantFrom || days2(a.b.date, c.b.date) > 20) return false;
+    const s = sup[a.b.sup], date = addDays(c.b.date > a.b.date ? c.b.date : a.b.date, R.int(Math.min(10, s.terms), 25));
+    if (date > asOf) return false;
+    a.planted = c.planted = 'combined';
+    a.pays = []; c.pays = [];
+    a.pays.push({ id:'P' + a.b.id.slice(1) + 'c', date, amount:total(a.b) + total(c.b), ref:`${R.pick(modes)} ${s.name.toUpperCase()} SETTLEMENT` });
+    labels.push({ type:'combined', ids:[a.b.id, c.b.id], impact:tax(a.b) + tax(c.b), bucket:'confirm' });
+    return true;
+  }
+  for (const list of bySup.values()) for (let i = 0; i + 1 < list.length; i++) if (R.chance(RATES.combined * scale) && plantCombined(list[i], list[i + 1])) i++;
   function days2(a, b) { return Math.round((new Date(b) - new Date(a)) / 864e5); }
 
   /* 3. single-bill errors */
@@ -149,9 +149,10 @@ function generate(cfg) {
     const slab = SLAB_HSN.includes(b.hsn) && b.date >= SWITCH;
     if (type === 'rate' && !slab) return false;
     if (type === 'unpaid180' && !oldEnough) return false;
-    if (type === 'doublePay' && (!paidBy || addDays(paidBy, 25) > asOf)) return false;
-    if (type === 'split' && addDays(b.date, sup[b.sup].terms + 12) > asOf) return false;
+    if (type === 'doublePay' && (!paidBy || addDays(paidBy, 20) > asOf)) return false;
+    if (type === 'split' && addDays(b.date, s.terms + 12) > asOf) return false;
     if (bl.tags.has('recurring') || bl.twin) return false;
+    if (type !== 'unpaid180' && b.date < plantFrom) return false;
     bl.planted = type;
     const L = { type, ids:[b.id], impact:0, bucket:null };
     switch (type) {
@@ -164,8 +165,8 @@ function generate(cfg) {
       case 'taxType': setHeads(b, tax(b), !intra); setHeads(g, tax(b), !intra); L.impact = tax(b); L.bucket = 'reverse'; break;
       case 'duplicate': { const d = Object.assign({}, b, { id:b.id + 'D', inv:b.inv.includes('-') ? b.inv.replace('-', '/') : b.inv.replace('/', '-') }); extraBooks.push(d); L.ids = [d.id]; L.impact = tax(b); L.bucket = 'reverse'; break; }
       case 'unpaid180': { const T = total(b); if (R.chance(.3)) { const pa = Math.round(T * R.range(.3, .7)); bl.pays = [{ id:'P' + b.id.slice(1), date:addDays(b.date, R.int(20, 60)), amount:pa, ref:`NEFT ${s.name.toUpperCase()} ${s.pfx}${bl.num}` }]; L.impact = Math.round(tax(b) * (T - pa) / T); } else { bl.pays = []; L.impact = tax(b); } L.bucket = 'reverse'; break; }
-      case 'split': { const T = total(b), p1 = Math.round(T * R.range(.4, .6)), d1 = addDays(b.date, s.terms - 10), d2 = addDays(b.date, s.terms + 12); const ref = (x) => `${R.pick(modes)} ${s.name.toUpperCase()} ${s.pfx}${bl.num} ${x}`; bl.pays = [{ id:'P' + b.id.slice(1) + 'a', date:d1, amount:p1, ref:ref('PART') }, { id:'P' + b.id.slice(1) + 'b', date:d2, amount:T - p1, ref:ref('BAL') }]; L.impact = tax(b); L.bucket = 'confirm'; break; }
-      case 'doublePay': { const p0 = bl.pays[0]; bl.pays.push({ id:p0.id + 'x', date:addDays(p0.date, R.int(3, 20)), amount:p0.amount, ref:`${R.pick(modes)} ${s.name.toUpperCase()} ${s.pfx}${bl.num}` }); bl.pays[0].ref = `NEFT ${s.name.toUpperCase()} ${s.pfx}${bl.num}`; L.impact = p0.amount; L.bucket = 'leak'; break; }
+      case 'split': { const T = total(b), p1 = Math.round(T * R.range(.4, .6)), d1 = addDays(b.date, Math.max(3, s.terms - 10)), d2 = addDays(b.date, s.terms + 12); const ref = (x) => `${R.pick(modes)} ${s.name.toUpperCase()} ${s.pfx}${bl.num} ${x}`; bl.pays = [{ id:'P' + b.id.slice(1) + 'a', date:d1, amount:p1, ref:ref('PART') }, { id:'P' + b.id.slice(1) + 'b', date:d2, amount:T - p1, ref:ref('BAL') }]; L.impact = tax(b); L.bucket = 'confirm'; break; }
+      case 'doublePay': { const p0 = bl.pays[0]; bl.pays.push({ id:p0.id + 'x', date:addDays(p0.date, R.int(3, 18)), amount:p0.amount, ref:`${R.pick(modes)} ${s.name.toUpperCase()} ${s.pfx}${bl.num}` }); bl.pays[0].ref = `NEFT ${s.name.toUpperCase()} ${s.pfx}${bl.num}`; L.impact = p0.amount; L.bucket = 'leak'; break; }
       case 'spike': { const t = Math.round(median(s.hist) * R.range(10, 16) / 10) * 10; b.taxable = g.taxable = t; setHeads(b, Math.round(t * b.rate / 100), intra); setHeads(g, tax(b), intra); bl.pays[0].amount = total(b); L.impact = tax(b); L.bucket = 'review'; break; }
     }
     labels.push(L);
@@ -175,13 +176,14 @@ function generate(cfg) {
     if (bl.planted) continue;
     const slab = SLAB_HSN.includes(bl.b.hsn) && bl.b.date >= SWITCH;
     let u = R.next(), type = null, acc = 0;
-    for (const t of order) { acc += t === 'rate' ? (slab ? RATES.rate : 0) : RATES[t]; if (u < acc) { type = t; break; } }
+    for (const t of order) { acc += (t === 'rate' ? (slab ? RATES.rate : 0) : RATES[t]) * scale; if (u < acc) { type = t; break; } }
     if (type) plant(bl, type);
   }
   // Small demo sets: make sure every error type appears at least once, so the walkthrough has an example of each.
+  if (cfg.ensureAll && !labels.some((l) => l.type === 'combined')) { outer: for (const list of bySup.values()) for (let i = 0; i + 1 < list.length; i++) if (plantCombined(list[i], list[i + 1])) break outer; }
   if (cfg.ensureAll) for (const t of order) {
     if (labels.some((l) => l.type === t)) continue;
-    const pool = bills.filter((bl) => !bl.planted && bl.b && bl.g);
+    const pool = bills.filter((bl) => !bl.planted && bl.b && bl.g && (t === 'unpaid180' || bl.b.date >= plantFrom));
     const target = t === 'rate' ? pool.filter((bl) => SLAB_HSN.includes(bl.b.hsn) && bl.b.date >= SWITCH) : t === 'unpaid180' ? pool.filter((bl) => bl.b.date <= addDays(asOf, -190)) : pool;
     for (const bl of target) if (plant(bl, t)) break;
   }
@@ -235,7 +237,7 @@ if (require.main === module) {
   const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
   const seed = +arg('seed', 42), only = arg('only', 'both'), root = path.join(__dirname, '..', 'data');
   if (only !== 'test') {
-    const d = generate({ seed, suppliers:20, from:'2026-01', to:'2026-09', asOf:'2026-09-30', billsPerMonth:1, medianBill:90000, ensureAll:true });
+    const d = generate({ seed, suppliers:20, from:'2026-01', to:'2026-09', asOf:'2026-09-30', billsPerMonth:1, medianBill:90000, ensureAll:true, lastMonthMult:7, rateScale:3, plantFrom:'2026-09-01', terms:[5, 7, 10] });
     writeSet(path.join(root, 'demo'), d, path.join(root, 'demo.js'));
     console.log('demo: books', d.D.books.length, 'g2b', d.D.g2b.length, 'bank', d.D.bank.length, 'planted', d.labels.length);
   }
