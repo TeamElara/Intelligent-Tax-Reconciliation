@@ -1,0 +1,1410 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0A1A17">
+<title>Rekora | September 2026 reconciliation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Eczar:wght@500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- Tokens: ledger ink by night, ledger paper by day ---------- */
+:root, [data-theme="dark"] {
+  --bg:#0A1A17; --side:#0C1F1B; --surface:#0F2521; --surface-2:#132D28; --raised:#173530;
+  --line:#1E3C36; --line-2:#29514A; --text:#E7F0EB; --muted:#8FA9A0; --faint:#5F7C73;
+  --mint:#7FD1AE; --mint-strong:#A6E5C8; --on-mint:#08201B;
+  --amber:#F2B544; --red:#F2737A; --plum:#C7A0EA;
+  --amber-bg:rgba(242,181,68,.11); --red-bg:rgba(242,115,122,.11); --mint-bg:rgba(127,209,174,.10); --plum-bg:rgba(199,160,234,.12);
+  --ruled:rgba(127,209,174,.055); --margin-rule:rgba(242,115,122,.28);
+  --shadow:0 24px 60px -28px rgba(0,0,0,.75);
+  --scrim:rgba(4,12,10,.62);
+}
+[data-theme="light"] {
+  --bg:#EDF2EF; --side:#13302B; --surface:#FFFFFF; --surface-2:#F4F8F6; --raised:#FFFFFF;
+  --line:#D9E4DF; --line-2:#C4D3CC; --text:#13302B; --muted:#566A64; --faint:#8B9E97;
+  --mint:#1F8A5B; --mint-strong:#156B45; --on-mint:#FFFFFF;
+  --amber:#B0700A; --red:#C8343B; --plum:#7A2A8C;
+  --amber-bg:#FBF0DB; --red-bg:#FBE7E8; --mint-bg:#E1F2E9; --plum-bg:#F3E8F7;
+  --ruled:rgba(19,48,43,.05); --margin-rule:rgba(200,52,59,.30);
+  --shadow:0 22px 48px -26px rgba(19,48,43,.38);
+  --scrim:rgba(19,48,43,.38);
+}
+:root {
+  --display:"Eczar","Iowan Old Style",Georgia,serif;
+  --ui:"Mukta","Segoe UI",system-ui,-apple-system,sans-serif;
+  --side-text:#D3E3DB; --side-muted:#7E9D93; --side-line:#1F3E37;
+  --r:16px; --r-sm:10px;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:88px; }
+body { margin:0; min-width:320px; background:var(--bg); color:var(--text); font:400 15.5px/1.5 var(--ui); -webkit-font-smoothing:antialiased; transition:background .3s ease, color .3s ease; }
+button, input { font:inherit; color:inherit; }
+button { cursor:pointer; background:none; border:0; padding:0; }
+a { color:inherit; text-decoration:none; }
+:focus-visible { outline:2px solid var(--mint); outline-offset:3px; border-radius:6px; }
+.num { font-family:var(--display); font-variant-numeric:lining-nums tabular-nums; letter-spacing:-.01em; }
+.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.skip { position:absolute; left:-999px; top:8px; background:var(--mint); color:var(--on-mint); padding:8px 12px; border-radius:8px; z-index:100; }
+.skip:focus { left:12px; }
+
+/* ---------- Shell ---------- */
+.shell { display:grid; grid-template-columns:248px minmax(0,1fr); min-height:100vh; }
+.sidebar { position:sticky; top:0; height:100vh; background:var(--side); color:var(--side-text); padding:24px 16px 18px; display:flex; flex-direction:column; gap:18px; border-right:1px solid var(--side-line); z-index:20; }
+.brand { display:flex; align-items:center; gap:11px; padding:0 8px; }
+.brand svg { width:34px; height:34px; flex:none; }
+.brand-name { font:700 25px/1 var(--display); letter-spacing:-.02em; color:#F2F7F4; }
+.company { margin-top:6px; border:1px solid var(--side-line); border-radius:12px; padding:11px 12px; background:rgba(255,255,255,.025); }
+.company b { display:block; font-size:14px; font-weight:600; color:#F2F7F4; line-height:1.25; }
+.company span { display:block; font-size:12.5px; color:var(--side-muted); margin-top:3px; font-variant-numeric:tabular-nums; }
+.nav { display:grid; gap:3px; margin-top:4px; }
+.nav a, .side-btn { display:flex; align-items:center; gap:12px; min-height:42px; padding:0 12px; border-radius:10px; color:var(--side-muted); font-size:15px; font-weight:500; transition:background .15s ease, color .15s ease; width:100%; text-align:left; }
+.nav a:hover, .side-btn:hover { background:rgba(255,255,255,.05); color:#EAF3EE; }
+.nav a.active { background:rgba(127,209,174,.12); color:#EAF6F0; }
+.nav svg, .side-btn svg { width:19px; height:19px; flex:none; stroke:currentColor; stroke-width:1.7; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.nav .count { margin-left:auto; min-width:24px; height:21px; padding:0 6px; display:grid; place-items:center; border-radius:6px; background:rgba(242,181,68,.16); color:#F2C36A; font-size:12px; font-weight:700; }
+.side-sep { height:1px; background:var(--side-line); margin:4px 6px; }
+.side-btn kbd { margin-left:auto; font:600 11px/1 var(--ui); color:var(--side-muted); border:1px solid var(--side-line); border-radius:5px; padding:3px 6px; }
+.side-btn.chaos { color:#F5A3A8; }
+.side-btn.chaos:hover { background:rgba(242,115,122,.10); color:#FFC9CC; }
+.side-bottom { margin-top:auto; display:flex; align-items:center; gap:10px; padding:14px 8px 0; border-top:1px solid var(--side-line); }
+.avatar { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; background:#7FD1AE; color:#08201B; font-weight:700; font-size:13px; flex:none; }
+.side-bottom b { display:block; font-size:14px; font-weight:600; color:#F2F7F4; line-height:1.2; }
+.side-bottom div span { display:block; font-size:12.5px; color:var(--side-muted); }
+
+.main { min-width:0; overflow-x:clip; width:100%; max-width:1480px; margin-inline:auto; padding:0 clamp(20px,3.4vw,56px) 40px; }
+.topbar { position:sticky; top:0; z-index:15; height:72px; display:flex; align-items:center; gap:16px; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); margin:0 calc(-1 * clamp(20px,3.4vw,56px)); padding:0 clamp(20px,3.4vw,56px); }
+.crumb { font-size:14px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.crumb b { color:var(--text); font-weight:600; }
+.search { margin-left:auto; position:relative; width:min(340px,34vw); }
+.search input { width:100%; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--surface); padding:0 64px 0 38px; font-size:14.5px; }
+.search input::placeholder { color:var(--faint); }
+.search svg { position:absolute; left:12px; top:11px; width:18px; height:18px; stroke:var(--faint); fill:none; stroke-width:1.8; }
+.search kbd { position:absolute; right:10px; top:10px; font:600 11px/1 var(--ui); color:var(--faint); border:1px solid var(--line); border-radius:5px; padding:4px 6px; }
+.icon-btn { width:40px; height:40px; border-radius:10px; border:1px solid var(--line); display:grid; place-items:center; background:var(--surface); flex:none; }
+.icon-btn svg { width:18px; height:18px; stroke:var(--text); fill:none; stroke-width:1.8; stroke-linecap:round; }
+.chaos-chip { display:none; align-items:center; gap:8px; height:40px; padding:0 14px; border-radius:10px; background:var(--red-bg); color:var(--red); font-weight:600; font-size:14px; white-space:nowrap; }
+.chaos-chip.on { display:inline-flex; }
+.chaos-chip i { width:8px; height:8px; border-radius:50%; background:var(--red); animation:pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity:.3; } }
+
+/* ---------- Intro ---------- */
+.intro { display:flex; align-items:flex-end; justify-content:space-between; gap:28px; padding:40px 0 28px; flex-wrap:wrap; }
+.intro h1 { margin:0; font:600 clamp(34px,4.1vw,58px)/1.04 var(--display); letter-spacing:-.025em; max-width:19ch; }
+.intro h1 .amt { color:var(--amber); white-space:nowrap; }
+.intro p { margin:14px 0 0; color:var(--muted); font-size:17px; max-width:56ch; }
+.intro p b { color:var(--mint); font-weight:600; }
+.actions { display:flex; gap:10px; flex-wrap:wrap; }
+.btn { display:inline-flex; align-items:center; gap:9px; height:44px; padding:0 18px; border-radius:11px; font-weight:600; font-size:15px; border:1px solid var(--line-2); background:var(--surface); transition:transform .12s ease, background .15s ease; white-space:nowrap; }
+.btn:hover { background:var(--surface-2); }
+.btn:active { transform:translateY(1px); }
+.btn svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.btn.primary { background:var(--mint); color:var(--on-mint); border-color:var(--mint); }
+.btn.primary:hover { background:var(--mint-strong); }
+.btn.danger { background:var(--red); color:#1C0607; border-color:var(--red); }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.btn.small { height:36px; padding:0 13px; font-size:14px; border-radius:9px; }
+
+/* ---------- Hero: the ledger ---------- */
+.hero { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr); gap:20px; }
+.ledger { position:relative; overflow:hidden; border-radius:var(--r); border:1px solid var(--line); background:var(--surface); padding:24px 26px 18px 46px; box-shadow:var(--shadow);
+  background-image:repeating-linear-gradient(to bottom, transparent 0 27px, var(--ruled) 27px 28px); }
+.ledger::before, .ledger::after { content:""; position:absolute; top:0; bottom:0; width:1px; background:var(--margin-rule); }
+.ledger::before { left:22px; } .ledger::after { left:26px; }
+.ledger-head { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; flex-wrap:wrap; }
+.ledger-head h2 { margin:0; font:600 21px/1.2 var(--display); }
+.ledger-head p { margin:4px 0 0; color:var(--muted); font-size:14px; }
+.net { text-align:right; }
+.net span { display:block; color:var(--muted); font-size:13.5px; }
+.net strong { display:block; font-size:clamp(30px,3vw,42px); line-height:1.05; font-weight:700; color:var(--text); }
+.wf { width:100%; height:auto; display:block; margin-top:8px; }
+.wf text { font-family:var(--ui); fill:var(--muted); font-size:15px; }
+.wf .val { font-family:var(--display); font-weight:600; font-size:18px; fill:var(--text); }
+.wf .b-total { fill:var(--line-2); } .wf .b-final { fill:var(--mint); }
+.wf .b-risk { fill:var(--amber); } .wf .b-reverse { fill:var(--red); } .wf .b-recover { fill:var(--mint); opacity:.55; }
+.wf .conn { stroke:var(--faint); stroke-dasharray:3 4; stroke-width:1; }
+.wf .axis { stroke:var(--line-2); stroke-width:1; }
+.wf .brk { stroke:var(--faint); fill:none; stroke-width:1.4; }
+.ledger-foot { display:flex; gap:18px; flex-wrap:wrap; justify-content:space-between; border-top:1px dashed var(--line-2); margin-top:4px; padding-top:12px; font-size:14px; color:var(--muted); }
+.ledger-foot b { color:var(--text); font-weight:600; }
+
+.buckets { display:grid; gap:12px; grid-template-rows:repeat(3,1fr); }
+.bucket { text-align:left; border-radius:var(--r); border:1px solid var(--line); background:var(--surface); padding:16px 18px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:4px 12px; transition:border-color .15s ease, transform .15s ease, background .15s ease; }
+.bucket:hover { transform:translateY(-1px); }
+.bucket .lab { display:flex; align-items:center; gap:9px; font-weight:600; font-size:15px; }
+.bucket .lab i { width:10px; height:10px; border-radius:3px; }
+.bucket strong { grid-column:1; font-size:30px; line-height:1.1; font-weight:700; }
+.bucket small { grid-column:1 / -1; color:var(--muted); font-size:13.5px; }
+.bucket .open { grid-row:1 / 3; grid-column:2; font-size:13px; font-weight:600; border-radius:999px; padding:4px 10px; white-space:nowrap; }
+.bucket.risk strong { color:var(--amber); } .bucket.risk .lab i { background:var(--amber); } .bucket.risk .open { background:var(--amber-bg); color:var(--amber); }
+.bucket.recover strong { color:var(--mint); } .bucket.recover .lab i { background:var(--mint); } .bucket.recover .open { background:var(--mint-bg); color:var(--mint); }
+.bucket.reverse strong { color:var(--red); } .bucket.reverse .lab i { background:var(--red); } .bucket.reverse .open { background:var(--red-bg); color:var(--red); }
+.bucket.active { border-color:currentColor; }
+.bucket.risk.active { border-color:var(--amber); background:var(--amber-bg); }
+.bucket.recover.active { border-color:var(--mint); background:var(--mint-bg); }
+.bucket.reverse.active { border-color:var(--red); background:var(--red-bg); }
+
+/* ---------- Status ---------- */
+.status { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr); gap:20px; margin-top:20px; }
+.card { border-radius:var(--r); border:1px solid var(--line); background:var(--surface); padding:20px 22px; }
+.card-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+.card-head h3 { margin:0; font-size:16px; font-weight:600; }
+.card-head span { color:var(--muted); font-size:13.5px; }
+.seg { display:flex; height:14px; border-radius:7px; overflow:hidden; gap:2px; background:var(--line); }
+.seg span { display:block; height:100%; transition:width .6s cubic-bezier(.2,.8,.2,1); }
+.legend { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:12px; font-size:13.5px; color:var(--muted); }
+.legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:7px; vertical-align:-1px; }
+.legend b { color:var(--text); font-weight:600; margin-left:3px; }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); margin-top:16px; border-top:1px solid var(--line); padding-top:14px; }
+.stats div + div { border-left:1px solid var(--line); padding-left:16px; }
+.stats span { display:block; color:var(--muted); font-size:13px; }
+.stats strong { display:block; font-size:24px; font-weight:600; margin-top:2px; }
+.deadlines { display:grid; gap:12px; }
+.dl { display:grid; grid-template-columns:62px 1fr; gap:14px; align-items:center; }
+.dl .days { height:62px; border-radius:12px; display:grid; place-items:center; text-align:center; background:var(--surface-2); border:1px solid var(--line); line-height:1; }
+.dl .days strong { font-size:24px; font-weight:700; display:block; }
+.dl .days small { font-size:11.5px; color:var(--muted); display:block; margin-top:3px; }
+.dl b { display:block; font-weight:600; font-size:15px; }
+.dl span { display:block; color:var(--muted); font-size:13.5px; line-height:1.4; }
+.dl.urgent .days { background:var(--amber-bg); border-color:transparent; } .dl.urgent .days strong { color:var(--amber); }
+
+/* ---------- Sections ---------- */
+.section { margin-top:52px; }
+.sec-head { display:flex; justify-content:space-between; align-items:flex-end; gap:18px; flex-wrap:wrap; margin-bottom:16px; }
+.sec-head h2 { margin:0; font:600 clamp(26px,2.4vw,32px)/1.1 var(--display); letter-spacing:-.015em; }
+.sec-head p { margin:6px 0 0; color:var(--muted); font-size:15px; }
+.chips { display:flex; gap:7px; flex-wrap:wrap; }
+.chip { height:34px; padding:0 13px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:14px; font-weight:500; color:var(--muted); display:inline-flex; align-items:center; gap:7px; }
+.chip i { width:8px; height:8px; border-radius:50%; }
+.chip[aria-pressed="true"] { color:var(--text); border-color:var(--line-2); background:var(--surface-2); box-shadow:inset 0 0 0 1px var(--line-2); }
+
+/* ---------- Queue + evidence ---------- */
+.work { display:grid; grid-template-columns:minmax(0,1.32fr) minmax(360px,1fr); gap:20px; align-items:start; }
+.queue { position:relative; overflow:hidden; border-radius:var(--r); border:1px solid var(--line); background:var(--surface); }
+.q-head, .q-row { display:grid; grid-template-columns:112px minmax(0,1.25fr) minmax(0,1fr) minmax(0,.95fr); gap:14px; align-items:center; padding:12px 18px; }
+.q-head { font-size:12.5px; color:var(--faint); font-weight:600; border-bottom:1px solid var(--line); padding-top:13px; padding-bottom:11px; }
+.q-row { width:100%; text-align:left; border-bottom:1px solid var(--line); min-height:74px; transition:background .12s ease; position:relative; }
+.q-row:last-child { border-bottom:0; }
+.q-row:hover { background:var(--surface-2); }
+.q-row[aria-selected="true"] { background:var(--surface-2); box-shadow:inset 0 0 0 1.5px var(--mint); border-radius:12px; }
+.q-row .imp { font-size:19px; font-weight:600; }
+.q-row .who b { display:block; font-weight:600; font-size:15px; line-height:1.25; }
+.q-row .who span, .q-row .inv span { display:block; color:var(--muted); font-size:13px; }
+.q-row .inv { font-size:14px; overflow:hidden; text-overflow:ellipsis; }
+.q-row .inv b { font-weight:500; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tag { display:inline-flex; align-items:center; gap:6px; border-radius:7px; padding:2px 9px; font-size:13px; font-weight:600; white-space:nowrap; }
+.tag.risk { background:var(--amber-bg); color:var(--amber); } .tag.recover, .tag.confirm { background:var(--mint-bg); color:var(--mint); }
+.tag.reverse { background:var(--red-bg); color:var(--red); } .tag.leak { background:var(--surface-2); color:var(--muted); box-shadow:inset 0 0 0 1px var(--line-2); } .tag.review { background:var(--plum-bg); color:var(--plum); }
+.q-row .why { display:block; color:var(--muted); font-size:13px; margin-top:3px; line-height:1.35; }
+.q-row.new { animation:arrive 1.8s ease; }
+@keyframes arrive { 0% { background:var(--red-bg); transform:translateX(12px); opacity:0; } 15% { opacity:1; transform:none; } 70% { background:var(--red-bg); } 100% { background:transparent; } }
+.badge-new { display:inline-block; margin-left:6px; font-size:11.5px; font-weight:700; color:var(--red); }
+.q-empty { padding:40px 20px; text-align:center; color:var(--muted); }
+.q-empty b { display:block; color:var(--text); font:600 20px/1.3 var(--display); margin-bottom:4px; }
+.q-foot { padding:12px 18px; color:var(--muted); font-size:13.5px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.q-foot kbd { font:600 11px/1 var(--ui); border:1px solid var(--line); border-radius:5px; padding:3px 6px; color:var(--faint); }
+.scan { position:absolute; inset:0; pointer-events:none; opacity:0; background:linear-gradient(to bottom, transparent, var(--mint-bg)); }
+.scan::after { content:""; position:absolute; left:0; right:0; height:2px; top:0; background:var(--mint); box-shadow:0 0 18px 4px var(--mint); }
+.scan.on { opacity:1; animation:fade 1.15s ease forwards; }
+.scan.on::after { animation:sweep 1.1s cubic-bezier(.5,0,.3,1) forwards; }
+.scan-label { position:absolute; right:14px; top:12px; font-size:13px; font-weight:600; color:var(--mint); background:var(--surface); border:1px solid var(--line-2); padding:4px 10px; border-radius:999px; }
+@keyframes sweep { from { top:0; } to { top:100%; } }
+@keyframes fade { 0% { opacity:0; } 10% { opacity:1; } 85% { opacity:1; } 100% { opacity:0; } }
+
+.evidence { position:sticky; top:90px; border-radius:var(--r); border:1px solid var(--line); background:var(--surface); padding:20px; display:flex; flex-direction:column; gap:14px; box-shadow:var(--shadow); }
+.ev-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.ev-top h3 { margin:0; font:600 22px/1.2 var(--display); }
+.ev-top p { margin:3px 0 0; color:var(--muted); font-size:14px; }
+.conf { font-size:12.5px; font-weight:600; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:3px 10px; white-space:nowrap; }
+.billtabs { display:flex; gap:6px; flex-wrap:wrap; }
+.billtabs button { font-size:13px; padding:4px 10px; border-radius:7px; border:1px solid var(--line); color:var(--muted); }
+.billtabs button[aria-pressed="true"] { color:var(--text); background:var(--surface-2); border-color:var(--line-2); }
+.cmp { width:100%; border-collapse:separate; border-spacing:0; font-size:13.5px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.cmp th, .cmp td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; }
+.cmp tr:last-child td, .cmp tr:last-child th { border-bottom:0; }
+.cmp thead th { background:var(--surface-2); font-size:12.5px; color:var(--muted); font-weight:600; }
+.cmp tbody th { color:var(--muted); font-weight:500; width:86px; }
+.cmp td.id { font-size:12px; white-space:nowrap; letter-spacing:-.01em; }
+.cmp td { font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.cmp td.bad { background:var(--red-bg); color:var(--red); font-weight:600; }
+.cmp td.warn { background:var(--amber-bg); color:var(--amber); font-weight:600; }
+.cmp td.odd { background:var(--plum-bg); color:var(--plum); font-weight:600; }
+.cmp td.good { color:var(--mint); font-weight:600; }
+.cmp td.none { color:var(--faint); font-style:italic; }
+.explain { border-radius:12px; padding:14px 16px; background:var(--surface-2); border:1px solid var(--line); }
+.explain h4 { margin:0 0 6px; font-size:14px; font-weight:700; color:var(--mint); display:flex; justify-content:space-between; gap:8px; }
+.explain h4 span { color:var(--faint); font-weight:500; font-size:12.5px; }
+.explain p { margin:0; font-size:14.5px; line-height:1.55; }
+.ev-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.ev-empty { color:var(--muted); text-align:center; padding:40px 10px; }
+.ev-empty b { display:block; font:600 20px/1.3 var(--display); color:var(--text); margin-bottom:6px; }
+
+/* ---------- Suppliers ---------- */
+.table-wrap { max-width:100%; border-radius:var(--r); border:1px solid var(--line); background:var(--surface); overflow-x:auto; }
+table.sup { width:100%; border-collapse:collapse; font-size:14.5px; min-width:760px; }
+table.sup th { text-align:left; font-size:12.5px; color:var(--faint); font-weight:600; padding:13px 16px; border-bottom:1px solid var(--line); }
+table.sup td { padding:13px 16px; border-bottom:1px solid var(--line); }
+table.sup tr:last-child td { border-bottom:0; }
+table.sup tbody tr { cursor:pointer; transition:background .12s ease; }
+table.sup tbody tr:hover { background:var(--surface-2); }
+table.sup td b { font-weight:600; display:block; }
+table.sup td small { color:var(--muted); font-size:13px; }
+.risk-cell { display:flex; align-items:center; gap:10px; min-width:160px; }
+.risk-bar { flex:1; height:8px; border-radius:4px; background:var(--line); overflow:hidden; }
+.risk-bar span { display:block; height:100%; border-radius:4px; }
+.risk-cell strong { width:30px; text-align:right; font-size:17px; }
+.filing.bad { color:var(--amber); font-weight:600; }
+
+/* ---------- Liability ---------- */
+.liab { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr); gap:20px; align-items:start; }
+table.heads { width:100%; border-collapse:collapse; font-size:15px; }
+table.heads th { text-align:right; font-size:12.5px; color:var(--faint); font-weight:600; padding:10px 12px; border-bottom:1px solid var(--line); }
+table.heads th:first-child, table.heads td:first-child { text-align:left; }
+table.heads td { text-align:right; padding:12px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+table.heads tfoot td { border-bottom:0; font-weight:700; font-size:16px; }
+table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display); font-size:20px; }
+.setoff { display:grid; gap:10px; margin-top:6px; }
+.step { display:grid; grid-template-columns:28px 1fr; gap:12px; align-items:start; font-size:14.5px; }
+.step i { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-weight:700; font-size:13px; background:var(--mint-bg); color:var(--mint); }
+.step span { color:var(--muted); display:block; font-size:13.5px; }
+
+/* ---------- Sources ---------- */
+.sources { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)) minmax(230px,1.2fr); gap:14px; }
+.src { border-radius:var(--r); border:1px solid var(--line); background:var(--surface); padding:16px; display:flex; flex-direction:column; gap:4px; }
+.src svg { width:22px; height:22px; stroke:var(--mint); fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; margin-bottom:6px; }
+.src b { font-weight:600; font-size:15px; }
+.src strong { font-size:24px; font-weight:600; }
+.src span { color:var(--muted); font-size:13px; }
+.src .ok { color:var(--mint); font-weight:600; }
+.drop { border-radius:var(--r); border:1.5px dashed var(--line-2); padding:16px; display:flex; flex-direction:column; justify-content:center; gap:6px; color:var(--muted); font-size:14px; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+.drop:hover, .drop.over { border-color:var(--mint); background:var(--mint-bg); }
+.drop b { color:var(--text); font-weight:600; font-size:15px; }
+.foot { margin-top:40px; padding-top:16px; border-top:1px solid var(--line); color:var(--faint); font-size:13px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+/* ---------- Drawers, modal, toasts ---------- */
+.scrim { position:fixed; inset:0; background:var(--scrim); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:40; }
+.scrim.on { opacity:1; pointer-events:auto; }
+.drawer { position:fixed; top:0; right:0; height:100vh; width:min(460px,100vw); background:var(--surface); border-left:1px solid var(--line); z-index:50; transform:translateX(102%); transition:transform .28s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; box-shadow:var(--shadow); }
+.drawer.on { transform:none; }
+.dr-head { padding:20px 22px 14px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.dr-head h2 { margin:0; font:600 24px/1.15 var(--display); }
+.dr-head p { margin:4px 0 0; color:var(--muted); font-size:14px; }
+.dr-body { flex:1; overflow-y:auto; padding:18px 22px; }
+.dr-foot { padding:14px 22px; border-top:1px solid var(--line); }
+.msgs { display:flex; flex-direction:column; gap:12px; }
+.msg { max-width:92%; border-radius:14px; padding:11px 14px; font-size:14.5px; line-height:1.55; }
+.msg.me { align-self:flex-end; background:var(--mint); color:var(--on-mint); border-bottom-right-radius:4px; }
+.msg.ai { align-self:flex-start; background:var(--surface-2); border:1px solid var(--line); border-bottom-left-radius:4px; }
+.msg p { margin:0; } .msg p + p, .msg p + ul { margin-top:8px; }
+.msg.ai ul { margin:6px 0 0; padding-left:18px; }
+.msg.ai li { margin:3px 0; }
+.ref { display:inline-flex; align-items:center; border-radius:6px; padding:0 7px; margin:1px 2px; font-size:13px; font-weight:600; background:var(--mint-bg); color:var(--mint); }
+.verified { display:flex; align-items:center; gap:6px; margin-top:8px; font-size:12.5px; color:var(--faint); }
+.verified svg { width:14px; height:14px; stroke:var(--mint); fill:none; stroke-width:2.2; }
+.verified.failed, .verified.failed svg { color:var(--red); stroke:var(--red); }
+.suggest { display:flex; flex-wrap:wrap; gap:7px; margin-top:14px; }
+.suggest button { font-size:13.5px; border:1px solid var(--line-2); border-radius:999px; padding:6px 12px; color:var(--text); text-align:left; }
+.suggest button:hover { background:var(--surface-2); }
+.ask-form { display:flex; gap:8px; }
+.ask-form input { flex:1; height:44px; border-radius:11px; border:1px solid var(--line-2); background:var(--surface-2); padding:0 14px; }
+.ask-form button { width:44px; height:44px; border-radius:11px; background:var(--mint); display:grid; place-items:center; }
+.ask-form svg { width:18px; height:18px; stroke:var(--on-mint); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.typing { display:inline-flex; gap:4px; } .typing i { width:6px; height:6px; border-radius:50%; background:var(--muted); animation:pulse 1s infinite; } .typing i:nth-child(2) { animation-delay:.15s; } .typing i:nth-child(3) { animation-delay:.3s; }
+
+.score { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; }
+.score div { border-radius:12px; border:1px solid var(--line); padding:10px 12px; background:var(--surface-2); }
+.score span { display:block; color:var(--muted); font-size:12.5px; }
+.score strong { font-size:28px; font-weight:700; line-height:1.1; }
+.score .c strong { color:var(--mint); } .score .m strong { color:var(--red); } .score .i strong { color:var(--plum); }
+.step-title { font-weight:700; font-size:14.5px; margin:16px 0 8px; }
+.picks { display:grid; gap:7px; }
+.pick { display:grid; grid-template-columns:18px 1fr auto; gap:10px; align-items:center; border:1px solid var(--line); border-radius:11px; padding:10px 12px; cursor:pointer; font-size:14px; }
+.pick:hover { background:var(--surface-2); }
+.pick input { accent-color:var(--red); margin:0; }
+.pick small { display:block; color:var(--muted); font-size:12.5px; }
+.pick:has(input:checked) { border-color:var(--red); background:var(--red-bg); }
+.pick.done { opacity:.45; cursor:not-allowed; }
+#billPicks { grid-template-columns:1fr 1fr; } #billPicks .pick { grid-template-columns:18px 1fr; padding:9px 10px; } #billPicks .pick > span:last-child { display:none; }
+.delta { display:flex; align-items:center; gap:8px; margin-top:8px; font-size:13.5px; color:var(--muted); }
+.delta input { width:120px; height:34px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface-2); padding:0 10px; }
+.log { margin-top:16px; display:grid; gap:6px; font-size:13.5px; }
+.log div { border-radius:9px; padding:8px 10px; background:var(--surface-2); border:1px solid var(--line); }
+.log b.c { color:var(--mint); } .log b.m { color:var(--red); }
+
+.modal { position:fixed; inset:0; display:grid; place-items:center; z-index:60; pointer-events:none; opacity:0; transition:opacity .18s ease; padding:16px; }
+.modal.on { pointer-events:auto; opacity:1; }
+.modal-box { width:min(620px,100%); max-height:88vh; overflow:auto; background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:22px; }
+.modal-box h2 { margin:0; font:600 24px/1.2 var(--display); }
+.modal-box p.sub { margin:4px 0 14px; color:var(--muted); font-size:14px; }
+.lang { display:flex; gap:6px; margin-bottom:10px; }
+.draft { white-space:pre-wrap; font-size:15px; line-height:1.6; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:14px 16px; min-height:180px; }
+.draft[lang="hi"] { font-size:16px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
+
+.toasts { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); display:grid; gap:8px; z-index:70; width:min(520px,calc(100vw - 32px)); }
+.toast { display:flex; align-items:center; gap:12px; background:var(--text); color:var(--bg); border-radius:12px; padding:11px 14px; font-size:14.5px; box-shadow:var(--shadow); animation:toastin .25s ease; }
+.toast b { font-weight:700; }
+.toast button { margin-left:auto; font-weight:700; color:var(--bg); text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
+@keyframes toastin { from { transform:translateY(10px); opacity:0; } }
+
+/* ---------- Responsive ---------- */
+@media (max-width:1240px) {
+  .shell { grid-template-columns:76px minmax(0,1fr); }
+  .sidebar { padding:22px 12px; align-items:center; }
+  .brand-name, .company, .nav a span, .nav .count, .side-btn span, .side-btn kbd, .side-bottom div { display:none; }
+  .brand { padding:0; } .nav a, .side-btn { width:48px; justify-content:center; padding:0; }
+  .side-bottom { padding:14px 0 0; }
+  .sources { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .drop { grid-column:1 / -1; }
+}
+@media (max-width:1020px) {
+  .hero, .status, .work, .liab { grid-template-columns:1fr; }
+  .buckets { grid-template-rows:none; grid-template-columns:repeat(3,1fr); }
+  .bucket { grid-template-columns:1fr; } .bucket .open { grid-row:auto; grid-column:1; justify-self:start; margin-top:6px; }
+  .evidence { position:static; }
+}
+@media (max-width:680px) {
+  .shell { display:block; }
+  .sidebar { position:sticky; top:0; height:60px; flex-direction:row; padding:0 14px; align-items:center; gap:6px; }
+  .brand-name { display:block; font-size:21px; }
+  .nav { display:flex; margin:0 0 0 auto; }
+  .nav a:nth-child(n+3), .side-sep, .side-bottom, .side-btn.chaos { display:none; }
+  .nav a, .side-btn { width:40px; min-height:40px; }
+  .topbar { top:60px; height:62px; }
+  .crumb { display:none; } .search { width:auto; flex:1; margin-left:0; } .search kbd { display:none; }
+  .intro { padding-top:26px; }
+  .buckets { grid-template-columns:1fr; }
+  .ledger { padding:18px 16px 14px 34px; } .ledger::before { left:14px; } .ledger::after { left:18px; }
+  .net { text-align:left; }
+  .stats { grid-template-columns:1fr 1fr 1fr; } .stats strong { font-size:20px; }
+  .q-head { display:none; }
+  .q-row { grid-template-columns:1fr auto; gap:6px 12px; }
+  .q-row .imp { grid-column:2; grid-row:1; text-align:right; }
+  .q-row .iss { grid-column:1; grid-row:1; } .q-row .who, .q-row .inv { grid-column:1 / -1; }
+  .sources { grid-template-columns:1fr 1fr; }
+}
+@media (prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+  *, *::before, *::after { animation-duration:.001s !important; animation-iteration-count:1 !important; transition-duration:.001s !important; }
+}
+/* ---------- Accuracy ---------- */
+.acc-tiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:16px; }
+.acc-tile { border-radius:var(--r); border:1px solid var(--line); background:var(--surface); padding:16px 18px; }
+.acc-tile span { display:block; color:var(--muted); font-size:13.5px; }
+.acc-tile strong { display:block; font-size:30px; font-weight:700; line-height:1.15; margin-top:2px; }
+.acc-tile small { display:block; color:var(--muted); font-size:13px; margin-top:2px; }
+table.acc { width:100%; border-collapse:collapse; font-size:14.5px; min-width:640px; }
+table.acc th { text-align:right; font-size:12.5px; color:var(--faint); font-weight:600; padding:12px 16px; border-bottom:1px solid var(--line); }
+table.acc td { text-align:right; padding:11px 16px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+table.acc th:first-child, table.acc td:first-child { text-align:left; }
+table.acc tr:last-child td { border-bottom:0; }
+table.acc .miss { color:var(--red); font-weight:600; }
+.acc-note { margin:12px 2px 0; color:var(--muted); font-size:13.5px; max-width:90ch; }
+@media (max-width:1020px) { .acc-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.drop-note { display:block; margin-top:6px; color:var(--faint); font-size:12.5px; }
+#decBody td small { display:block; }
+.bf-svg { width:100%; height:auto; display:block; margin-top:6px; }
+.bf-svg text { font-family:var(--ui); fill:var(--muted); font-size:12px; }
+.bf-bar { fill:var(--mint); } .bf-exp { stroke:var(--amber); stroke-width:2.5; }
+.bf-key { display:flex; gap:18px; flex-wrap:wrap; color:var(--muted); font-size:13px; margin-top:6px; }
+.bf-key i { display:inline-block; width:12px; height:8px; border-radius:2px; margin-right:6px; vertical-align:0; }
+</style>
+</head>
+<body>
+<a class="skip" href="#queue">Skip to the issue queue</a>
+<div class="shell">
+  <aside class="sidebar" aria-label="Primary">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="#7FD1AE" stroke-width="3"/><path d="M26.5 26.5 36 36" stroke="#7FD1AE" stroke-width="4" stroke-linecap="round"/><rect x="10" y="11" width="11" height="3" rx="1.5" fill="#F2B544"/><rect x="10" y="16" width="14" height="3" rx="1.5" fill="#7FD1AE"/><rect x="10" y="21" width="8" height="3" rx="1.5" fill="#F2737A"/></svg>
+      <span class="brand-name">Rekora</span>
+    </div>
+    <div class="company"><b>Mehta Electricals Pvt Ltd</b><span>GSTIN 07AABCM4521K1ZK</span></div>
+    <nav class="nav" aria-label="Sections">
+      <a href="#overview" class="active" data-nav="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Overview</span></a>
+      <a href="#queue" data-nav="queue"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Issue queue</span><span class="count" id="navCount">0</span></a>
+      <a href="#suppliers" data-nav="suppliers"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg><span>Suppliers</span></a>
+      <a href="#liability" data-nav="liability"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/></svg><span>Tax liability</span></a>
+      <a href="#sources" data-nav="sources"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><span>Sources</span></a>
+      <a href="#accuracy" data-nav="accuracy"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-6"/></svg><span>Accuracy</span></a>
+    </nav>
+    <div class="side-sep"></div>
+    <button class="side-btn" type="button" data-open="ask"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg><span>Ask Rekora</span><kbd>/</kbd></button>
+    <button class="side-btn chaos" type="button" data-open="chaos"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Chaos Mode</span></button>
+    <div class="side-bottom"><span class="avatar">AK</span><div><b>Aanya Kapoor</b><span>Accountant</span></div></div>
+  </aside>
+
+  <main class="main" id="main">
+    <header class="topbar">
+      <div class="crumb">Mehta Electricals <span aria-hidden="true">/</span> <b>September 2026 return</b></div>
+      <label class="search"><span class="sr">Search suppliers or invoices</span>
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Search supplier or invoice" autocomplete="off"><kbd>Ctrl K</kbd>
+      </label>
+      <button class="chaos-chip" id="chaosChip" type="button" data-open="chaos"><i></i><span id="chaosChipText"></span></button>
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to light theme"><svg viewBox="0 0 24 24" id="themeIcon"></svg></button>
+    </header>
+
+    <section id="overview" aria-labelledby="h1">
+      <div class="intro">
+        <div>
+          <h1 id="h1">Before you file September, fix <span class="amt num" id="h1Amt">₹6.3 lakh</span>.</h1>
+          <p id="introSub">Rekora checked 2,148 bills across your books, GSTR-2B and bank.</p>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="rerunBtn"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>Re-run reconciliation</button>
+          <button class="btn" type="button" data-export><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>Export GSTR-3B draft</button>
+        </div>
+      </div>
+
+      <div class="hero">
+        <article class="ledger" aria-labelledby="ledgerTitle">
+          <div class="ledger-head">
+            <div><h2 id="ledgerTitle">Credit you can defend</h2><p>From the ITC in your books to what GSTR-2B and the law allow.</p></div>
+            <div class="net"><span>Net GST to pay in cash</span><strong class="num" id="netPay">₹0</strong></div>
+          </div>
+          <svg class="wf" id="wf" viewBox="0 0 760 300" role="img" aria-label="Input tax credit waterfall"></svg>
+          <div class="ledger-foot"><span>Output tax <b class="num" id="outTax"></b></span><span>Eligible ITC <b class="num" id="eligTax"></b></span><span>Axis starts at ₹40 lakh so small changes stay visible</span></div>
+        </article>
+        <div class="buckets" role="group" aria-label="Money buckets, click to filter">
+          <button class="bucket risk" type="button" data-filter="risk"><span class="lab"><i></i>ITC at risk</span><strong class="num" id="bRisk">₹0</strong><span class="open" id="oRisk"></span><small>In your books, not backed by GSTR-2B</small></button>
+          <button class="bucket recover" type="button" data-filter="recover"><span class="lab"><i></i>Potential credit to review</span><strong class="num" id="bRecover">₹0</strong><span class="open" id="oRecover"></span><small>In GSTR-2B, not in your books. Check before you claim.</small></button>
+          <button class="bucket reverse" type="button" data-filter="reverse"><span class="lab"><i></i>ITC to reverse</span><strong class="num" id="bReverse">₹0</strong><span class="open" id="oReverse"></span><small>Unpaid 180+ days, duplicates, wrong rate or tax type</small></button>
+        </div>
+      </div>
+
+      <div class="status">
+        <div class="card">
+          <div class="card-head"><h3 id="reconTitle">2,148 purchase bills reconciled three ways</h3><span id="reconTime">in 41 seconds</span></div>
+          <div class="seg" id="seg" aria-hidden="true"></div>
+          <div class="legend" id="legend"></div>
+          <div class="stats">
+            <div><span>Open issues</span><strong class="num" id="sOpen">0</strong></div>
+            <div><span>Resolved this month</span><strong class="num" id="sResolved">38</strong></div>
+            <div><span>Matched coverage</span><strong class="num" id="sCover">0%</strong></div>
+          </div>
+        </div>
+        <div class="card deadlines" id="deadlines"></div>
+      </div>
+    </section>
+
+    <section class="section" id="queue" aria-labelledby="qTitle">
+      <div class="sec-head">
+        <div><h2 id="qTitle">Issue queue</h2><p>Biggest money first. Pick a row to see the evidence.</p></div>
+        <button class="btn small" type="button" data-export-queue>Export queue (CSV)</button>
+        <div class="chips" role="group" aria-label="Filter by bucket" id="chips">
+          <button class="chip" data-filter="all" aria-pressed="true">All</button>
+          <button class="chip" data-filter="risk" aria-pressed="false"><i style="background:var(--amber)"></i>At risk</button>
+          <button class="chip" data-filter="recover" aria-pressed="false"><i style="background:var(--mint)"></i>Potential credit</button>
+          <button class="chip" data-filter="reverse" aria-pressed="false"><i style="background:var(--red)"></i>To reverse</button>
+          <button class="chip" data-filter="review" aria-pressed="false"><i style="background:var(--plum)"></i>Review</button>
+        </div>
+      </div>
+      <div class="work">
+        <div class="queue" id="queuePanel">
+          <div class="q-head" aria-hidden="true"><span>Impact</span><span>Issue</span><span>Supplier</span><span>Invoice</span></div>
+          <div id="qList" role="listbox" aria-label="Issues"></div>
+          <div class="q-foot"><span id="qFoot"></span><span><kbd>J</kbd> <kbd>K</kbd> to move, <kbd>/</kbd> to ask</span></div>
+          <div class="scan" id="scan"><span class="scan-label" id="scanLabel">Re-checking 2,148 bills</span></div>
+        </div>
+        <aside class="evidence" id="evidence" aria-live="polite"></aside>
+      </div>
+    </section>
+
+    <section class="section" id="decisions" aria-labelledby="decTitle" hidden>
+      <div class="sec-head"><div><h2 id="decTitle">Decision log</h2><p>Every decision, with the evidence it rested on and its effect on your claim. Undo removes the entry.</p></div>
+        <button class="btn small" type="button" data-export-log>Export decision log (CSV)</button></div>
+      <div class="table-wrap"><table class="sup"><thead><tr><th>Time</th><th>Issue</th><th>Supplier and invoice</th><th>Decision</th><th>At stake</th><th>Effect on your claim</th></tr></thead><tbody id="decBody"></tbody></table></div>
+    </section>
+
+    <section class="section" id="suppliers" aria-labelledby="supTitle">
+      <div class="sec-head"><div><h2 id="supTitle">Supplier risk</h2><p>Mismatch history, missing filings and odd bills, rolled into one score. Click a supplier to filter the queue.</p></div></div>
+      <div class="table-wrap"><table class="sup"><thead><tr><th>Supplier</th><th>State</th><th>Bills this month</th><th>Open issues</th><th>ITC exposed</th><th>GSTR-1 filing</th><th>Risk score</th></tr></thead><tbody id="supBody"></tbody></table></div>
+      <div style="margin-top:12px"><button class="btn small" type="button" id="supMore"></button></div>
+      <div class="card" id="benford" style="margin-top:20px" hidden></div>
+    </section>
+
+    <section class="section" id="liability" aria-labelledby="liabTitle">
+      <div class="sec-head"><div><h2 id="liabTitle">Tax liability</h2><p>Output tax minus eligible credit, set off head by head the way Section 49 requires.</p></div>
+        <button class="btn" type="button" data-export><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>Download GSTR-3B draft (JSON)</button></div>
+      <div class="liab">
+        <div class="card"><table class="heads"><thead><tr><th>Tax head</th><th>Output tax</th><th>Eligible ITC</th><th>Credit used</th><th>Cash to pay</th></tr></thead><tbody id="headsBody"></tbody><tfoot id="headsFoot"></tfoot></table></div>
+        <div class="card"><div class="card-head"><h3>How the credit is used</h3></div><div class="setoff">
+          <div class="step"><i>1</i><div>IGST credit goes first<span>Against IGST, then CGST, then SGST.</span></div></div>
+          <div class="step"><i>2</i><div>CGST and SGST never cross<span>CGST credit pays CGST then IGST; SGST credit pays SGST then IGST.</span></div></div>
+          <div class="step"><i>3</i><div>Whatever is left is paid in cash<span>That figure feeds GSTR-3B Table 6.1.</span></div></div>
+          <div class="step"><i>4</i><div>Excess claims can attract interest<span>Rekora highlights differences for review before you file. You decide what to claim.</span></div></div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="section" id="sources" aria-labelledby="srcTitle">
+      <div class="sec-head"><div><h2 id="srcTitle">Sources</h2><p>Everything this month's reconciliation is built from.</p></div><button class="btn small" type="button" id="loadDemo">Load demo month</button></div>
+      <div class="sources" id="srcGrid"></div>
+    </section>
+
+    <section class="section" id="accuracy" aria-labelledby="accTitle" hidden>
+      <div class="sec-head"><div><h2 id="accTitle">Accuracy</h2><p id="accSub">Measured on our synthetic test set, with the same engine this dashboard runs.</p></div></div>
+      <div class="acc-tiles" id="accTiles"></div>
+      <div class="table-wrap"><table class="acc"><thead><tr><th>Error type</th><th>Planted</th><th>Caught</th><th>Recall</th><th>Wrongly flagged</th><th>₹ caught of ₹ planted</th></tr></thead><tbody id="accBody"></tbody></table></div>
+      <p class="acc-note" id="accMl"></p>
+      <p class="acc-note" id="accNote"></p>
+    </section>
+
+    <footer class="foot"><span>Illustrative data for a fictional company. HSN rates come from a demo rate master.</span><span>Rekora, built for Fintechstico v7.0</span></footer>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer" id="ask" aria-labelledby="askTitle" role="dialog" aria-modal="true">
+  <div class="dr-head"><div><h2 id="askTitle">Ask Rekora</h2><p>Answers come from this month's reconciled data. Each displayed rupee figure is checked against the current engine results.</p></div><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="dr-body"><div class="msgs" id="msgs"></div><div class="suggest" id="suggest"></div></div>
+  <div class="dr-foot"><form class="ask-form" id="askForm"><label class="sr" for="askInput">Your question</label><input id="askInput" placeholder="Ask about suppliers, issues or tax due" autocomplete="off"><button type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form></div>
+</aside>
+
+<aside class="drawer" id="chaos" aria-labelledby="chaosTitle" role="dialog" aria-modal="true">
+  <div class="dr-head"><div><h2 id="chaosTitle">Chaos Mode</h2><p>Break any clean bill on purpose. Rekora re-checks everything and should catch it.</p></div><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="dr-body">
+    <div class="score"><div><span>Planted</span><strong class="num" id="cPlanted">0</strong></div><div class="c"><span>Caught</span><strong class="num" id="cCaught">0</strong></div><div class="m"><span>Missed</span><strong class="num" id="cMissed">0</strong></div><div class="i"><span>Ignored</span><strong class="num" id="cIgnored">0</strong></div></div>
+    <div class="step-title">1. Pick a clean bill</div><div class="picks" id="billPicks"></div>
+    <div class="step-title">2. Choose how to break it</div><div class="picks" id="breakPicks"></div>
+    <div class="delta" id="deltaRow"><label for="deltaIn">Change GSTR-2B taxable value by ₹</label><input id="deltaIn" type="number" value="15000" step="100"></div>
+    <div class="log" id="chaosLog"></div>
+  </div>
+  <div class="dr-foot" style="display:flex;gap:8px;justify-content:space-between"><button class="btn small" type="button" id="resetBtn">Reset all data</button><button class="btn danger" type="button" id="breakBtn"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Break it</button></div>
+</aside>
+
+<div class="modal" id="draftModal" role="dialog" aria-modal="true" aria-labelledby="draftTitle">
+  <div class="modal-box">
+    <h2 id="draftTitle">Follow-up draft</h2><p class="sub" id="draftSub"></p>
+    <div class="lang" role="group" aria-label="Language"><button class="chip" data-lang="en" aria-pressed="true">English</button><button class="chip" data-lang="hi" aria-pressed="false">हिन्दी</button></div>
+    <div class="draft" id="draftText"></div>
+    <div class="modal-actions"><button class="btn small" type="button" data-close>Close</button><button class="btn small primary" type="button" id="copyDraft">Copy message</button></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="engine.js"></script>
+<script src="data/eval.js"></script>
+<script src="data/demo.js"></script>
+<script src="ingest.js"></script>
+<script src="ml.js"></script>
+<script>
+/* =====================================================================
+   DATA: the sample (SEED), rate master and engine live in engine.js, shared with the Node tools.
+   ===================================================================== */
+// Full-month aggregates (2,148 bills). The sample bills below are the ones shown in the queue.
+const BASE = { booksITC:4860000, risk:412380, recover:236450, reverse:218600, output:{ igst:2200000, cgst:2000000, sgst:2000000 }, itcShare:{ igst:.3289, cgst:.33555, sgst:.33555 } };
+const BASE_COUNTS = { total:2148, matched:1873, diff:96, confirm:41, unmatched:112, dup:26 };
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const inr = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+const lakh = (n) => '₹' + (n / 1e5).toFixed(1) + ' lakh';
+const L = (n) => '₹' + (n / 1e5).toFixed(1) + 'L';
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fdate = (d) => { const [y, m, dd] = d.split('-'); return `${+dd} ${MON[+m - 1]} ${y}`; };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* =====================================================================
+   State
+   ===================================================================== */
+const S = {
+  D:null, baseSet:null, groups:[], all:[], initialOpen:null, resolved:new Map(), booksDelta:0, resolvedCount:0,
+  decisions:[], seq:0, filter:'all', query:'', sel:null, billIdx:0, counts:null, lastMs:0, prevWf:null, clean:null, up:{}, srcNote:'',
+  chaos:{ planted:0, caught:0, missed:0, traps:0, ignored:0, falseAlarms:0, log:[], broken:new Set() }, newKeys:new Set(), undo:null,
+};
+// Datasets. The bundled demo month is the default; ?demo=seed forces the small built-in sample (whose headline totals are scaled by BASE).
+function seedSet() { return { D:Object.assign(structuredClone(SEED), { base:BASE }), label:'Built-in sample' }; }
+function demoSet() { const d = structuredClone(window.REKORA_DEMO.D); Ingest.withPeriod(d, window.REKORA_DEMO.sales); return { D:d, label:'Bundled demo month' }; }
+function defaultSet() { return window.REKORA_DEMO && !/demo=seed/.test(location.search) ? demoSet() : seedSet(); }
+function reset(set) {
+  S.decisions = [];
+  S.baseSet = set || S.baseSet || defaultSet();
+  S.D = structuredClone(S.baseSet.D); S.resolved = new Map(); S.booksDelta = 0; S.resolvedCount = 0;
+  S.counts = Object.assign({}, BASE_COUNTS); S.chaos = { planted:0, caught:0, missed:0, traps:0, ignored:0, falseAlarms:0, log:[], broken:new Set() }; S.newKeys = new Set();
+  S.initialOpen = null; S.sel = null; S.clean = null; S.prevWf = null;
+}
+const buyer = () => S.D.buyer || BUYER;
+const outputOf = () => (S.D.base ? BASE.output : (S.D.output || { igst:0, cgst:0, sgst:0 }));
+const periodOf = () => S.D.period || '2026-09';
+const periodBooks = () => S.D.books.filter((b) => b.date.startsWith(periodOf()));
+// Counts for the reconciliation bar, from the engine's own flags.
+function deriveCounts(issues) {
+  const by = new Map(); for (const i of issues) for (const id of i.bills) { if (!by.has(id)) by.set(id, new Set()); by.get(id).add(i.type); }
+  const c = { total:S.D.books.length, matched:0, diff:0, confirm:0, unmatched:0, dup:0 };
+  for (const b of S.D.books) {
+    const t = by.get(b.id);
+    if (!t) c.matched++;
+    else if (t.has('duplicate')) c.dup++;
+    else if (t.has('missing2b')) c.unmatched++;
+    else if (['gstin', 'split', 'combined'].some((x) => t.has(x))) c.confirm++;
+    else c.diff++;
+  }
+  return c;
+}
+function cleanBills(issues) {
+  const flagged = new Set(issues.flatMap((i) => i.bills)), seen = new Set(), out = [];
+  const pool = S.D.books.filter((b) => b._g && b._p && b._p.length === 1 && !flagged.has(b.id) && b.date.startsWith(periodOf()) && b.taxable > 0).sort((a, b) => b.taxable - a.taxable);
+  for (const b of pool) { if (seen.has(b.sup) || out.length >= 6) continue; seen.add(b.sup); out.push(b.id); }
+  return out;
+}
+function compute() {
+  const { issues, ms } = runEngine(S.D);
+  S.lastMs = ms;
+  S.idx = new Map(); for (const g of S.D.g2b) S.idx.set(g.id, g); for (const b of S.D.books) S.idx.set(b.id, b);
+  // Anomaly model: raises review flags only, never a rupee figure. Flags on bills the median rule already caught are attached to that issue.
+  S.ml = Rekora.ml.detect(S.D);
+  const spikeBy = new Map(issues.filter((i) => i.type === 'spike').map((i) => [i.bills[0], i]));
+  const mlIssues = [];
+  for (const f of S.ml.flags) {
+    const sp = spikeBy.get(f.bill);
+    if (sp) { sp.ml = f; continue; }
+    const b = S.D.books.find((x) => x.id === f.bill);
+    const it = { type:'anomaly', sup:f.sup, bills:[f.bill], impact:tax(b), ml:f };
+    it.ims = imsAdvice(it); mlIssues.push(it);
+  }
+  S.all = groupIssues(issues.concat(mlIssues));
+  S.groups = S.all.filter((g) => !S.resolved.has(g.key)).sort((a, b) => b.impact - a.impact);
+  // This month's totals count issues on bills of the return month, plus 180-day reversals of any age. Older-month issues stay in the queue.
+  const inPeriod = (g) => S.D.base || g.type === 'unpaid180' || g.bills.some((id) => { const r = rec(id); return r && r.date.startsWith(periodOf()); });
+  S.scoped = S.groups.filter(inPeriod);
+  const open = sumBuckets(S.scoped);
+  if (!S.initialOpen) S.initialOpen = open;
+  const t = {}, legacy = !!S.D.base;
+  if (legacy) {
+    for (const k of ['risk', 'recover', 'reverse']) t[k] = Math.max(0, BASE[k] + open[k] - S.initialOpen[k]);
+    t.books = BASE.booksITC + S.booksDelta;
+  } else {
+    for (const k of ['risk', 'recover', 'reverse']) t[k] = open[k];
+    t.books = periodBooks().reduce((a, b) => a + tax(b), 0) + S.booksDelta;
+    S.counts = deriveCounts(issues);
+    if (!S.clean) S.clean = cleanBills(issues);
+  }
+  if (legacy && !S.clean) S.clean = ['B13', 'B14', 'B15', 'B16', 'B17', 'B18'];
+  t.eligible = Math.max(0, t.books - t.risk - t.reverse + t.recover);
+  const o = outputOf(); t.output = o.igst + o.cgst + o.sgst;
+  t.net = Math.max(0, t.output - t.eligible);
+  S.totals = t;
+  if (!S.sel || !S.groups.find((g) => g.key === S.sel)) S.sel = S.groups[0] && S.groups[0].key;
+}
+function sumBuckets(groups) {
+  const o = { risk:0, recover:0, reverse:0, review:0, confirm:0, leak:0 };
+  for (const g of groups) o[bucketOf(g)] += g.impact;
+  return o;
+}
+const supName = (k) => S.D.suppliers[k].name;
+// Bill lookup by id (books win over GSTR-2B on a clash). Rebuilt on every compute() so chaos edits are seen.
+const rec = (id) => (S.idx ? S.idx.get(id) : null) || S.D.books.find((b) => b.id === id) || S.D.g2b.find((g) => g.id === id);
+
+/* =====================================================================
+   Rendering
+   ===================================================================== */
+function animateNum(el, to, fmt = inr, dur = 900) {
+  const from = +(el.dataset.v || 0); el.dataset.v = to;
+  if (reduced || from === to) { el.textContent = fmt(to); return; }
+  const t0 = performance.now();
+  const step = (t) => { const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(from + (to - from) * e); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function renderAll() {
+  renderDecisions(); renderBenford(); renderMeta(); renderAccuracy(); renderHero(); renderStatus(); renderQueue(); renderEvidence(); renderSuppliers(); renderLiability(); renderSources(); renderChaos();
+}
+const TYPE_ORDER = ['missing2b', 'missingBooks', 'amount', 'taxValue', 'gstin', 'rate', 'taxType', 'duplicate', 'unpaid180', 'split', 'combined', 'doublePay', 'spike'];
+// What the decision does to the claim, in words.
+const effectText = (d) => (d.claimDelta < 0 ? `Claim reduced by ${inr(-d.claimDelta)}` : d.claimDelta > 0 ? `Claim raised by ${inr(d.claimDelta)}` : d.eligibleDelta > 0 ? `Credit stays, eligible ITC +${inr(d.eligibleDelta)}` : d.eligibleDelta < 0 ? `Eligible ITC −${inr(-d.eligibleDelta)}` : 'No change to the claim');
+const stamp = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+function renderDecisions() {
+  const sec = $('#decisions'); sec.hidden = !S.decisions.length;
+  $('#decBody').innerHTML = S.decisions.slice().reverse().map((d) => `<tr><td>${stamp(d.at).slice(11)}<small>${stamp(d.at).slice(0, 10)}</small></td><td><b>${esc(d.issue)}</b><small>${esc(d.ims ? 'IMS advice: ' + d.ims : '')}</small></td><td><b>${esc(d.sup)}</b><small>${esc(d.invoices)}</small></td><td>${esc(d.action)}</td><td class="num">${inr(d.impact)}</td><td>${effectText(d)}</td></tr>`).join('');
+}
+// CSV with a BOM so Excel opens it as UTF-8. Cells starting with = + - @ get a leading apostrophe so a supplier name cannot run as a formula.
+function downloadCsv(name, cols, rows) {
+  const cell = (v) => { v = v === undefined || v === null ? '' : String(v); if (/^[=+\-@]/.test(v) && isNaN(Number(v))) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const text = '\uFEFF' + [cols.map((c) => c[0]).join(','), ...rows.map((r) => cols.map((c) => cell(c[1](r))).join(','))].join('\r\n') + '\r\n';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type:'text/csv;charset=utf-8' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function exportLog() {
+  if (!S.decisions.length) return toast('<b>No decisions yet.</b> Resolve an issue and it appears here.');
+  downloadCsv(`Rekora_decision_log_${periodOf()}.csv`, [['Logged at', (d) => stamp(d.at)], ['Return period', () => periodOf()], ['Issue', (d) => d.issue], ['Bucket', (d) => d.bucket], ['Supplier', (d) => d.sup], ['Supplier GSTIN', (d) => d.gstin], ['Invoices', (d) => d.invoices], ['At stake (INR)', (d) => d.impact], ['Decision', (d) => d.action], ['Result', (d) => d.outcome], ['Effect on claim', (d) => effectText(d)], ['Claim change (INR)', (d) => d.claimDelta], ['Change in eligible ITC (INR)', (d) => d.eligibleDelta], ['IMS advice', (d) => d.ims], ['Evidence and reason', (d) => d.why]], S.decisions);
+  toast(`<b>Decision log downloaded.</b> ${S.decisions.length} decision${S.decisions.length > 1 ? 's' : ''}.`);
+}
+function exportQueue() {
+  const rows = S.all.slice().sort((a, b) => b.impact - a.impact);
+  downloadCsv(`Rekora_issue_queue_${periodOf()}.csv`, [['Rank', (g) => rows.indexOf(g) + 1], ['Issue', (g) => TYPES[g.type].label], ['Bucket', (g) => bucketOf(g)], ['Supplier', (g) => supName(g.sup)], ['Supplier GSTIN', (g) => S.D.suppliers[g.sup].gstin], ['Invoices', (g) => g.bills.map((id) => rec(id).inv).join(' ')], ['At stake (INR)', (g) => g.impact], ['Status', (g) => (S.resolved.has(g.key) ? 'Decided' : 'Open')], ['IMS advice', (g) => (g.items[0].ims ? g.items[0].ims.act : '')], ['Why flagged', (g) => explain(g)]], rows);
+  toast(`<b>Issue queue downloaded.</b> ${rows.length} issues.`);
+}
+function renderBenford() {
+  const el = $('#benford'), b = Rekora.ml.benford(S.D);
+  if (!b) { el.hidden = true; return; }
+  el.hidden = false;
+  if (!b.applicable) { el.innerHTML = `<div class="card-head"><h3>Pattern check: first digits of every bill</h3><span>Benford's law</span></div><p class="acc-note" style="margin:0">Not applicable to this data. Benford's law needs bills spread over several orders of magnitude, and this ledger's bills span only about ${b.spread}× from small to large. Running it anyway would flag perfectly normal data, so Rekora skips it. It runs on larger ledgers.</p>`; return; }
+  const W = 540, H = 150, base = 120, top = 14, bw = 34, gap = (W - 20 - 9 * bw) / 8, mx = Math.max(...b.observed, ...b.expected) * 1.1;
+  const y = (v) => base - v / mx * (base - top);
+  const bars = b.observed.map((o, i) => { const x = 10 + i * (bw + gap); return `<rect class="bf-bar" x="${x}" y="${y(o)}" width="${bw}" height="${base - y(o)}" rx="3"/><line class="bf-exp" x1="${x - 3}" x2="${x + bw + 3}" y1="${y(b.expected[i])}" y2="${y(b.expected[i])}"/><text x="${x + bw / 2}" y="${base + 18}" text-anchor="middle">${i + 1}</text>`; }).join('');
+  el.innerHTML = `<div class="card-head"><h3>Pattern check: first digits of every bill</h3><span>Benford's law, whole ledger, ${b.n.toLocaleString('en-IN')} bills</span></div>
+    <svg class="bf-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="First-digit distribution of taxable values against Benford's law">${bars}</svg>
+    <div class="bf-key"><span><i style="background:var(--mint)"></i>Your bills</span><span><i style="background:var(--amber)"></i>Expected by Benford</span><span><b>Deviation ${b.mad}</b>: ${b.verdict} (Nigrini's bands)</span></div>
+    <p class="acc-note" style="margin-top:8px">Checked across the whole ledger, not per supplier: one supplier's bills are alike by design, so a per-supplier test would flag everyone. A deviation is a prompt to look, not proof of anything.</p>`;
+}
+function renderAccuracy() {
+  const sec = $('#accuracy'), ev = window.REKORA_EVAL;
+  if (!ev) { sec.hidden = true; return; }
+  sec.hidden = false;
+  const o = ev.overall, g = ev.generated, pct = (x) => (x * 100).toFixed(1) + '%', n = (x) => x.toLocaleString('en-IN');
+  $('#accTiles').innerHTML = [
+    ['Bills checked', n(g.books), `${n(g.suppliers)} suppliers, ${g.from} to ${g.to}`],
+    ['Errors planted', n(g.planted), `${g.plantedTypes} types, labelled in advance`],
+    ['Recall', pct(o.recall), `precision ${pct(o.precision)}, ₹-weighted ${pct(o.weightedRecall)}`],
+    ['Traps wrongly flagged', `${ev.traps.flagged} of ${n(ev.traps.total)}`, 'correct bills that only look different'],
+  ].map(([l, v, s]) => `<div class="acc-tile"><span>${l}</span><strong class="num">${v}</strong><small>${s}</small></div>`).join('');
+  $('#accBody').innerHTML = TYPE_ORDER.filter((t) => ev.perType[t]).map((t) => {
+    const m = ev.perType[t];
+    return `<tr><td>${TYPES[t].label}</td><td>${n(m.planted)}</td><td>${n(m.detected)}</td><td class="${m.missed ? 'miss' : ''}">${pct(m.recall)}</td><td class="${m.falsePositives ? 'miss' : ''}">${m.falsePositives}</td><td>${inr(m.rupeesCaught)} of ${inr(m.rupeesPlanted)}</td></tr>`;
+  }).join('');
+  const m = ev.ml;
+  $('#accMl').textContent = m ? `Anomaly model (${m.model}, no labels used to train): found ${m.spikesFound} of ${m.plantedSpikes} planted unusual bills while flagging ${(m.flaggedShare * 100).toFixed(1)}% of ${m.billsScored.toLocaleString('en-IN')} bills for review, in ${m.ms} ms. Flags are review items, not errors, and they never change a rupee figure.` : '';
+  $('#accNote').textContent = `The errors were planted by our own generator, following the rules this engine implements, so this shows the engine is consistent and fast (${n(o.billsPerSecond)} bills a second), not that it will score the same on real books. Real data comes next.`;
+}
+function renderHero() {
+  const t = S.totals;
+  const fix = t.risk + t.reverse;
+  $('#h1Amt').textContent = lakh(fix);
+  $('#introSub').innerHTML = `Rekora checked ${S.counts.total.toLocaleString('en-IN')} bills across your books, GSTR-2B and bank. It found <b>${lakh(t.recover)}</b> of potential credit to review.`;
+  animateNum($('#netPay'), t.net); animateNum($('#bRisk'), t.risk); animateNum($('#bRecover'), t.recover); animateNum($('#bReverse'), t.reverse);
+  $('#outTax').textContent = inr(t.output); $('#eligTax').textContent = inr(t.eligible);
+  const b = sumCount(S.scoped || S.groups);
+  $('#oRisk').textContent = `${b.risk} open`; $('#oRecover').textContent = `${b.recover} open`; $('#oReverse').textContent = `${b.reverse} open`;
+  $$('.bucket').forEach((el) => el.classList.toggle('active', el.dataset.filter === S.filter));
+  drawWaterfall();
+}
+function sumCount(groups) { const o = { risk:0, recover:0, reverse:0, review:0, confirm:0, leak:0 }; groups.forEach((g) => o[bucketOf(g)]++); return o; }
+
+function drawWaterfall() {
+  const t = S.totals;
+  const target = { books:t.books, risk:t.risk, reverse:t.reverse, recover:t.recover, eligible:t.eligible };
+  const lows = [t.books, t.books - t.risk, t.books - t.risk - t.reverse, t.books - t.risk - t.reverse + t.recover, t.eligible].map((x) => Math.max(0, x));
+  const low = Math.min(...lows), mag = Math.pow(10, Math.max(4, Math.floor(Math.log10(Math.max(low, 1))) - 1));
+  target.F = Math.max(0, Math.floor(low * 0.88 / mag) * mag); target.top = Math.max(t.books, 1) * 1.04;
+  const from = S.prevWf || { books:t.books, risk:0, reverse:0, recover:0, eligible:t.books };
+  S.prevWf = target;
+  const foot = $('.ledger-foot span:last-child'); if (foot) foot.textContent = target.F ? `Axis starts at ${lakh(target.F)} so small changes stay visible` : 'Axis starts at zero';
+  const t0 = performance.now(), dur = reduced ? 1 : 900;
+  const frame = (now) => {
+    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+    const v = {}; for (const k of ['books', 'risk', 'reverse', 'recover', 'eligible']) v[k] = from[k] + (target[k] - from[k]) * e;
+    paintWaterfall(v, target);
+    if (p < 1) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+function paintWaterfall(v, labels) {
+  const W = 760, H = 300, top = 34, bottom = 230, F = labels.F;
+  const maxV = Math.max(labels.top, F + 1);
+  const y = (x) => bottom - (Math.max(x, F) - F) / (maxV - F) * (bottom - top);
+  const a1 = v.books, a2 = a1 - v.risk, a3 = a2 - v.reverse, a4 = a3 + v.recover;
+  const bars = [
+    { k:['Credit in', 'your books'], c:'b-total', y0:F, y1:a1, lab:L(labels.books) },
+    { k:['At risk', ''], c:'b-risk', y0:a2, y1:a1, lab:'−' + L(labels.risk) },
+    { k:['To reverse', ''], c:'b-reverse', y0:a3, y1:a2, lab:'−' + L(labels.reverse) },
+    { k:['Potential credit', 'to review'], c:'b-recover', y0:a3, y1:a4, lab:'+' + L(labels.recover) },
+    { k:['Credit you', 'can defend'], c:'b-final', y0:F, y1:v.eligible, lab:L(labels.eligible) },
+  ];
+  const bw = 92, gap = (W - 40 - bars.length * bw) / (bars.length - 1);
+  let s = `<line class="axis" x1="20" x2="${W - 20}" y1="${bottom}" y2="${bottom}"/>`;
+  s += `<path class="brk" d="M8 ${bottom - 8} l6 -5 l6 10 l6 -10"/>`;
+  bars.forEach((b, i) => {
+    const x = 20 + i * (bw + gap);
+    const yTop = y(Math.max(b.y0, b.y1)), yBot = y(Math.min(b.y0, b.y1));
+    const h = Math.max(2, yBot - yTop);
+    s += `<rect class="${b.c}" x="${x}" y="${yTop}" width="${bw}" height="${h}" rx="5"/>`;
+    s += `<text class="val" x="${x + bw / 2}" y="${yTop - 9}" text-anchor="middle">${b.lab}</text>`;
+    s += `<text x="${x + bw / 2}" y="${bottom + 24}" text-anchor="middle">${b.k[0]}</text>`;
+    if (b.k[1]) s += `<text x="${x + bw / 2}" y="${bottom + 43}" text-anchor="middle">${b.k[1]}</text>`;
+    if (i < bars.length - 1) {
+      const level = [a1, a2, a3, a4][i];
+      s += `<line class="conn" x1="${x + bw}" x2="${x + bw + gap}" y1="${y(level)}" y2="${y(level)}"/>`;
+    }
+  });
+  $('#wf').innerHTML = s;
+}
+
+function renderStatus() {
+  const c = S.counts;
+  const parts = [['matched', 'Matched', 'var(--mint)'], ['diff', 'Matched with a difference', 'color-mix(in srgb, var(--mint) 45%, var(--surface))'], ['confirm', 'Needs your confirmation', 'var(--amber)'], ['unmatched', 'Unmatched', 'var(--red)'], ['dup', 'Duplicates', 'var(--plum)']];
+  $('#seg').innerHTML = parts.map(([k, , col]) => `<span style="width:${(c[k] / c.total * 100).toFixed(2)}%;background:${col}"></span>`).join('');
+  $('#legend').innerHTML = parts.map(([k, l, col]) => `<span><i style="background:${col}"></i>${l}<b>${c[k].toLocaleString('en-IN')}</b></span>`).join('');
+  $('#reconTitle').textContent = `${c.total.toLocaleString('en-IN')} purchase bills reconciled three ways`;
+  $('#reconTime').textContent = S.D.base ? (S.chaos.planted ? `last re-check took ${S.lastMs.toFixed(1)} ms` : 'in 41 seconds') : `in ${S.lastMs.toFixed(0)} ms`;
+  animateNum($('#sOpen'), S.groups.length, (n) => Math.round(n));
+  animateNum($('#sResolved'), (S.D.base ? 38 : 0) + S.resolvedCount, (n) => Math.round(n));
+  $('#sCover').textContent = Math.round((c.matched + c.diff) / c.total * 100) + '%';
+  $('#navCount').textContent = S.groups.length;
+  const now = new Date(), todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const dl = [['2026-10-14', 'Draft GSTR-2B for September', 'Accept, reject or park supplier bills in IMS before this. Untouched bills are deemed accepted.'], ['2026-10-20', 'GSTR-3B due', 'File and pay the net tax in cash.']];
+  $('#deadlines').innerHTML = `<div class="card-head" style="margin:0"><h3>Coming up</h3></div>` + dl.map(([d, t, s]) => {
+    const n = days(todayIso, d);
+    const lbl = n > 0 ? `<strong class="num">${n}</strong><small>days</small>` : n === 0 ? `<strong>Today</strong>` : `<strong class="num">${-n}</strong><small>days ago</small>`;
+    return `<div class="dl ${n >= 0 && n <= 14 ? 'urgent' : ''}"><div class="days">${lbl}</div><div><b>${t}, ${fdate(d)}</b><span>${s}</span></div></div>`;
+  }).join('');
+}
+
+function visibleGroups() {
+  const q = S.query.trim().toLowerCase();
+  return S.groups.filter((g) => {
+    if (S.filter !== 'all' && bucketOf(g) !== S.filter && !(S.filter === 'review' && ['confirm', 'leak'].includes(bucketOf(g)))) return false;
+    if (!q) return true;
+    const hay = [supName(g.sup), TYPES[g.type].label, ...g.bills.map((id) => rec(id).inv)].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+}
+function shortWhy(g) {
+  const i = g.items[0], s = S.D.suppliers[g.sup];
+  switch (g.type) {
+    case 'missing2b': return s.late ? 'Supplier hasn\'t filed GSTR-1' : 'Not reported by the supplier yet';
+    case 'missingBooks': return i.paid ? 'You paid it but never booked it' : 'Reported to you, not booked';
+    case 'amount': return i.bucket === 'recover' ? 'GSTR-2B shows more than your bill' : 'Books and GSTR-2B disagree on value';
+    case 'taxValue': return i.bucket === 'recover' ? 'Booked tax is below rate × value' : 'Tax doesn\'t equal rate × value';
+    case 'gstin': return 'Books GSTIN fails the checksum, confirm the supplier';
+    case 'rate': return i.scrapped ? `${rec(g.bills[0]).rate}% slab was scrapped in 2025` : 'Rate differs from the rate master';
+    case 'taxType': return i.inter ? 'CGST + SGST on an inter-state bill' : 'IGST on an intra-state bill';
+    case 'duplicate': return 'Same bill entered twice';
+    case 'unpaid180': return `${inr(i.unpaid)} unpaid for ${i.age} days`;
+    case 'spike': return `${i.ratio}× this supplier's usual bill`;
+    case 'anomaly': return `Unusual: ${i.ml.reasons[0] || 'differs from the rest of the ledger'}`;
+    case 'split': return `Paid in ${i.parts.length} parts, needs your confirmation`;
+    case 'combined': return `${g.bills.length} bills paid in one transfer, needs your confirmation`;
+    case 'doublePay': return 'Same bill paid twice, cash to recover';
+  }
+}
+function renderQueue() {
+  const list = visibleGroups();
+  const el = $('#qList');
+  if (!list.length) {
+    el.innerHTML = `<div class="q-empty"><b>${S.groups.length ? 'Nothing matches that filter' : 'All clear for September'}</b>${S.groups.length ? 'Try another bucket or clear the search.' : 'Every open issue has a decision. You\'re ready to file.'}</div>`;
+  } else {
+    el.innerHTML = list.map((g) => {
+      const ty = TYPES[g.type], st = S.D.suppliers[g.sup].gstin.slice(0, 2);
+      const invs = g.bills.map((id) => rec(id).inv);
+      return `<button class="q-row ${S.newKeys.has(g.key) ? 'new' : ''}" role="option" aria-selected="${g.key === S.sel}" data-key="${esc(g.key)}">
+        <span class="imp num">${inr(g.impact)}</span>
+        <span class="iss"><span class="tag ${bucketOf(g)}">${ty.label}</span>${S.newKeys.has(g.key) ? '<span class="badge-new">New</span>' : ''}<span class="why">${esc(shortWhy(g))}</span></span>
+        <span class="who"><b>${esc(supName(g.sup))}</b><span>${STATES[st] || 'State ' + st}</span></span>
+        <span class="inv"><b>${esc(invs.join(', '))}</b><span>${g.bills.length > 1 ? g.bills.length + ' bills' : fdate(rec(g.bills[0]).date)}</span></span>
+      </button>`;
+    }).join('');
+  }
+  const carry = S.groups.length - (S.scoped || S.groups).length;
+  $('#qFoot').textContent = `${list.length} of ${S.groups.length} open issues, ranked by rupee impact${carry ? `. ${carry} are from earlier months and not in this month's totals` : ''}`;
+  $$('#chips .chip').forEach((c) => c.setAttribute('aria-pressed', c.dataset.filter === S.filter));
+}
+
+function evidenceRows(g, b) {
+  const i = g.items[Math.min(S.billIdx, g.items.length - 1)];
+  const book = S.D.books.find((x) => x.id === b) || null;
+  const twin = g.type === 'duplicate' ? S.D.books.find((x) => x.id === i.twin) : null;
+  const src = twin || book;
+  const g2 = src ? (src._g ? S.D.g2b.find((x) => x.id === src._g) : null) : S.D.g2b.find((x) => x.id === b);
+  const pays = src && src._p ? src._p.map((id) => S.D.bank.find((p) => p.id === id)) : (i.paid ? [S.D.bank.find((p) => p.id === i.paid)] : []);
+  if (g.type === 'doublePay') pays.push(S.D.bank.find((p) => p.id === i.pay));
+  const gst = (r) => r ? (r.gstin || S.D.suppliers[r.sup].gstin) : null;
+  const C = (val, cls = '') => `<td class="${cls}">${val}</td>`;
+  const NONE = (t) => `<td class="none">${t}</td>`;
+  const bad = (cond, cls = 'bad') => cond ? cls : '';
+  const rows = [];
+  const bInv = book ? (twin ? `${esc(twin.inv)} and ${esc(book.inv)}` : esc(book.inv)) : null;
+  rows.push(['Invoice no.', book ? C(bInv, twin ? 'bad' : '') : NONE('Not in your books'), g2 ? C(esc(g2.inv)) : NONE('Not in GSTR-2B'), pays.length ? C(esc(pays.map((p) => p.ref).join(' + '))) : NONE(g.type === 'unpaid180' ? 'No payment' : '—')]);
+  rows.push(['Date', book ? C(fdate(book.date), bad(g.type === 'unpaid180', 'warn') || bad(g.type === 'spike' && i.sunday, 'odd')) : NONE('—'), g2 ? C(fdate(g2.date)) : NONE('—'), pays.length ? C(pays.map((p) => fdate(p.date)).join(', ')) : NONE(g.type === 'unpaid180' ? `${i.age} days, unpaid` : '—')]);
+  rows.push(['GSTIN', book ? C(gst(book), 'id ' + bad(g.type === 'gstin')) : NONE('—'), g2 ? C(gst(g2), 'id ' + (g.type === 'gstin' ? 'good' : '')) : NONE('—'), NONE('—')]);
+  rows.push(['Taxable', book ? C(inr(book.taxable), bad(g.type === 'amount') || bad(g.type === 'spike', 'odd')) : NONE('—'), g2 ? C(inr(g2.taxable), bad(g.type === 'amount')) : NONE('—'), g.type === 'spike' ? C(`Usual ${inr(i.med)}`, 'odd') : NONE('—')]);
+  if (book) rows.push(['Rate', C(book.rate + '%', bad(g.type === 'rate')), g2 ? C(Math.round(tax(g2) / g2.taxable * 100) + '%', bad(g.type === 'rate')) : NONE('—'), g.type === 'rate' ? C(`Master ${i.mr}%`, 'good') : NONE('—')]);
+  rows.push(['CGST + SGST', book ? C(inr(book.cgst + book.sgst), bad(g.type === 'taxType' && i.inter)) : NONE('—'), g2 ? C(inr(g2.cgst + g2.sgst), bad(g.type === 'taxType' && i.inter)) : NONE('—'), NONE('—')]);
+  rows.push(['IGST', book ? C(inr(book.igst), bad(g.type === 'taxType')) : NONE('—'), g2 ? C(inr(g2.igst), bad(g.type === 'taxType')) : NONE('—'), NONE('—')]);
+  const paidSum = pays.reduce((a, p) => a + p.amount, 0);
+  rows.push(['Total', book ? C(inr(total(book)), bad(g.type === 'amount')) : NONE('—'), g2 ? C(inr(total(g2)), bad(g.type === 'amount')) : NONE('—'), pays.length ? C(pays.length > 1 ? pays.map((p) => inr(p.amount)).join(' + ') : inr(paidSum), 'good') : NONE('—')]);
+  return `<table class="cmp"><thead><tr><th></th><th>Your books</th><th>GSTR-2B</th><th>Bank</th></tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${r[0]}</th>${r.slice(1).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function explain(g) {
+  const i = g.items[Math.min(S.billIdx, g.items.length - 1)];
+  const s = S.D.suppliers[g.sup], r = rec(i.bills[0]);
+  const st = STATES[s.gstin.slice(0, 2)] || 'another state';
+  switch (g.type) {
+    case 'missing2b': return `${g.bills.length > 1 ? g.bills.length + ' bills' : 'This bill'} (${g.bills.map((id) => rec(id).inv).join(', ')}) ${g.bills.length > 1 ? 'are' : 'is'} in your books, but ${s.name} hasn't reported ${g.bills.length > 1 ? 'them' : 'it'} in GSTR-1${s.late ? ' (their last filing was for July)' : ''}. Claiming ${inr(g.impact)} now would exceed GSTR-2B and can trigger a DRC-01C notice. Hold the claim and the next payment until they file.`;
+    case 'missingBooks': { const p = i.paid && S.D.bank.find((x) => x.id === i.paid); return `${s.name} reported ${r.inv} (taxable ${inr(r.taxable)}, GST ${inr(tax(r))}) against your GSTIN, but it isn't in your purchase register.${p ? ` Your bank shows ${inr(p.amount)} paid to them on ${fdate(p.date)}, so this looks like a real purchase that was never booked.` : ' Check whether it is yours before accepting it in IMS.'} Being in GSTR-2B doesn't make it claimable by itself: confirm the purchase, book it, and claim by ${fdate(i.lapse)} (the Section 16(4) time limit).`; }
+    case 'amount': { const g2 = S.D.g2b.find((x) => x.id === i.g); return i.bucket === 'recover' ? `Your books show a taxable value of ${inr(r.taxable)}; ${s.name} reported ${inr(g2.taxable)}, which is ${inr(g.impact)} more credit than your books claim. Check the bill. If GSTR-2B is right, correct your books and the extra credit is potential credit to review.` : `Your books show a taxable value of ${inr(r.taxable)}; ${s.name} reported ${inr(g2.taxable)}. Only the difference is at stake: ${inr(g.impact)} more credit in your books than GSTR-2B supports. Ask them to amend GSTR-1, or claim only the GSTR-2B value this month.`; }
+    case 'taxValue': return `At ${r.rate}% on ${inr(r.taxable)}, the tax should be ${inr(i.expected)}, but ${inr(tax(r))} was recorded. Correct the entry before filing.`;
+    case 'gstin': return `The GSTIN in your books (${r.gstin}) fails the checksum. GSTR-2B shows ${i.good} for the same invoice number and amount, so it is probably a typing error, but Rekora never merges two suppliers on its own. Confirm it is the same supplier, then fix the GSTIN in your books.`;
+    case 'rate': return `${s.name} charged ${r.rate}% on HSN ${r.hsn} (${HSN[r.hsn].d}). The rate master says ${i.mr}% for ${fdate(r.date)}.${i.scrapped ? ` The ${r.rate}% slab was scrapped on 22 Sep 2025.` : ''} The extra ${inr(g.impact)} of GST isn't safe to claim. Ask for a credit note.`;
+    case 'taxType': return i.inter ? `${s.name} is registered in ${st} (GSTIN starts ${s.gstin.slice(0, 2)}) and the goods came to you in Delhi. That's an inter-state supply, so it should carry IGST of ${inr(tax(r))}, not CGST + SGST. Credit under the wrong head can be disallowed.${r._p && r._p.length ? ' Amounts and payment match, so only the tax type is wrong.' : ''}` : `${s.name} is in Delhi, like you, so this bill should carry CGST + SGST, not IGST of ${inr(tax(r))}.`;
+    case 'duplicate': { const t = S.D.books.find((x) => x.id === i.twin); return `${t.inv} and ${r.inv} are the same bill entered twice: same supplier, amount and date. Only one appears in GSTR-2B and the bank. Remove the second entry, or you over-claim ${inr(g.impact)}.`; }
+    case 'unpaid180': return `This bill dated ${fdate(r.date)} is unpaid or part-paid after ${i.age} days, with ${inr(i.unpaid)} still outstanding${i.paid ? ` (${inr(i.paid)} was paid)` : ''}. Under the 180-day rule (Section 16(2), Rule 37) credit is reversed in proportion to the unpaid part, here ${inr(g.impact)}, and you can claim it back once you pay. Interest at 18% a year from the date the credit was availed is about ${inr(i.interest)} so far.`;
+    case 'spike': return `This bill's taxable value of ${inr(r.taxable)} is ${i.ratio}× ${s.name}'s usual ${inr(i.med)}.${i.sunday ? ' It\'s dated on a Sunday.' : ''} One-off bills like this are how fake-ITC invoices often look. Hold the payment and check the e-way bill before claiming.${i.ml ? ` The Isolation Forest model agrees: anomaly score ${i.ml.score.toFixed(2)}.` : ''}`;
+    case 'anomaly': return `The Isolation Forest model scored this bill ${i.ml.score.toFixed(2)} (1.0 is the most unusual) against the whole ledger, the main reasons: ${i.ml.reasons.join('; ') || 'it is unlike the other bills'}. That is not an error by itself, so check the bill with ${s.name} before you claim ${inr(tax(r))} of credit.`;
+    case 'split': { const ps = i.parts.map((id) => S.D.bank.find((p) => p.id === id)); return `${s.name}'s bill ${r.inv} (${inr(total(r))}) looks to be paid in ${ps.length} parts: ${ps.map((p) => `${inr(p.amount)} on ${fdate(p.date)}`).join(' and ')}. The parts add up exactly, but bank narrations rarely name the invoice, so Rekora does not decide this alone. Confirm the allocation to close it.`; }
+    case 'combined': { const p = S.D.bank.find((x) => x.id === i.pay); return `One payment of ${inr(p.amount)} on ${fdate(p.date)} ("${p.ref}") matches ${g.bills.map((id) => rec(id).inv).join(' + ')} from ${s.name} added together. It looks like a bulk payment. Confirm the allocation so these bills are not wrongly treated as unpaid under the 180-day rule.`; }
+    case 'doublePay': { const a = S.D.bank.find((x) => x.id === i.first), b2 = S.D.bank.find((x) => x.id === i.pay); return `${r.inv} (${inr(total(r))}) was paid on ${fdate(a.date)} and again on ${fdate(b2.date)}, both naming the same invoice. The bill and its credit are fine; ${inr(b2.amount)} of cash went out twice. Ask ${s.name} for a refund or an adjustment against the next bill. This is a cash leak, so it is not counted in the credit buckets.`; }
+  }
+}
+const ACTIONS = {
+  missing2b:[['Draft follow-up', 'draft'], ['Keep pending in IMS', 'fix', 'Kept pending. Moved out of this month\'s claim.'], ['Not an issue', 'none', 'Marked as fine. Credit stays in the claim.']],
+  missingBooks:[['Add to books', 'add', 'Booked. Credit added to this month\'s claim.'], ['Reject in IMS', 'none', 'Rejected in IMS. It won\'t count as your credit.']],
+  amount:[['Draft follow-up', 'draft'], ['Claim GSTR-2B value', 'fix', 'Claim reduced to the GSTR-2B value.']],
+  taxValue:[['Correct the entry', 'fix', 'Entry corrected.']],
+  gstin:[['Fix GSTIN in books', 'none', 'GSTIN fixed. Credit is safe to claim.']],
+  rate:[['Request credit note', 'draft'], ['Mark IMS: Reject', 'fix', 'Rejected in IMS. Excess GST left out of the claim.']],
+  taxType:[['Request credit note', 'draft'], ['Mark IMS: Reject', 'fix', 'Rejected in IMS until a corrected invoice arrives.']],
+  duplicate:[['Remove duplicate', 'fix', 'Duplicate removed from the books.']],
+  unpaid180:[['Reverse ITC', 'fix', 'Credit reversed. Re-claim it once you pay.'], ['Mark as paid', 'none', 'Marked as paid. Credit can stay.']],
+  spike:[['Hold payment', 'none', 'Payment on hold until delivery is verified.'], ['Mark verified', 'none', 'Verified as genuine.']],
+  anomaly:[['Mark verified', 'none', 'Verified as genuine.'], ['Hold payment', 'none', 'Payment on hold until the bill is verified.']],
+  combined:[['Confirm allocation', 'none', 'Payment allocation confirmed.'], ['Not a match', 'none', 'Unlinked. The bills go back to unpaid.']],
+  doublePay:[['Ask for refund', 'none', 'Refund request noted. No credit change.'], ['Mark as adjusted', 'none', 'Marked as adjusted against a later bill.']],
+  split:[['Confirm match', 'none', 'Split payment confirmed.'], ['Not a match', 'none', 'Unlinked. The bill goes back to unmatched.']],
+};
+function renderEvidence() {
+  const el = $('#evidence');
+  const g = S.groups.find((x) => x.key === S.sel);
+  if (!g) { el.innerHTML = `<div class="ev-empty"><b>Nothing selected</b>Pick an issue from the queue to see books, GSTR-2B and bank side by side.</div>`; return; }
+  if (S.billIdx >= g.items.length) S.billIdx = 0;
+  const ty = TYPES[g.type], bill = g.items[S.billIdx].bills[0];
+  const gi = g.items[Math.min(S.billIdx, g.items.length - 1)];
+  const score = g.type === 'anomaly' ? `Anomaly ${gi.ml.score.toFixed(2)}` : g.type === 'spike' ? `Risk ${riskScore(g.sup)} / 100` : `${ty.conf}% confident`;
+  const tabs = g.items.length > 1 ? `<div class="billtabs" role="group" aria-label="Bills in this issue">${g.items.map((it, n) => `<button data-bill="${n}" aria-pressed="${n === S.billIdx}">${esc(rec(it.bills[0]).inv)}</button>`).join('')}</div>` : '';
+  const words = explain(g), figs = (words.match(/₹[\d,]+/g) || []).length;
+  el.innerHTML = `<div class="ev-top"><div><h3>${ty.label}</h3><p>${esc(supName(g.sup))}, ${inr(g.impact)} ${bucketOf(g) === 'recover' ? 'to review' : bucketOf(g) === 'confirm' ? 'to confirm' : bucketOf(g) === 'leak' ? 'cash to recover' : 'at stake'}</p></div><span class="conf">${score}</span></div>
+    ${tabs}${evidenceRows(g, bill)}
+    <div class="explain"><h4>Why this was flagged<span>${figs} figure${figs === 1 ? '' : 's'} from the engine</span></h4><p>${esc(words)}</p></div>
+    <div class="explain"><h4>IMS advice<span>${esc(g.items[Math.min(S.billIdx, g.items.length - 1)].ims.act)}</span></h4><p>${esc(g.items[Math.min(S.billIdx, g.items.length - 1)].ims.why)}</p></div>
+    <div class="ev-actions">${ACTIONS[g.type].map(([label, act], n) => `<button class="btn small ${n === 0 ? 'primary' : ''}" data-act="${act}" data-n="${n}">${label}</button>`).join('')}</div>`;
+}
+function riskScore(k) {
+  const w = { spike:35, missing2b:15, taxType:20, rate:20, gstin:15, amount:15, duplicate:10, unpaid180:20, taxValue:10, missingBooks:0, split:0, combined:0, doublePay:10, anomaly:8 };
+  // Data-driven base: how unusual the supplier's own bills are (Isolation Forest, mean of their top three scores) plus late filing. The built-in sample has too few bills for the model, so it keeps its fixed base.
+  const ms = S.ml && S.ml.supplierScore && S.ml.supplierScore[k];
+  let s = ms !== undefined ? Math.max(0, Math.min(40, Math.round((ms - 0.4) * 100))) + (S.D.suppliers[k].late ? 10 : 0) : S.D.suppliers[k].base;
+  S.groups.filter((g) => g.sup === k).forEach((g) => s += w[g.type] * (g.type === 'missing2b' ? Math.min(3, g.bills.length) : 1));
+  // Squash so a few findings do not push every supplier to the ceiling.
+  return Math.min(99, Math.round(100 * (1 - Math.exp(-s / 55))));
+}
+function renderSuppliers() {
+  const rows = Object.keys(S.D.suppliers).map((k) => {
+    const gs = S.groups.filter((g) => g.sup === k);
+    const exposed = gs.filter((g) => ['risk', 'reverse', 'review'].includes(bucketOf(g))).reduce((a, g) => a + g.impact, 0);
+    return { k, s:S.D.suppliers[k], open:gs.length, exposed, score:riskScore(k) };
+  }).sort((a, b) => b.score - a.score);
+  const shown = S.allSup ? rows : rows.slice(0, 8);
+  $('#supMore').textContent = S.allSup ? 'Show top 8 only' : `Show all ${rows.length} suppliers`;
+  $('#supBody').innerHTML = shown.map((r) => {
+    const col = r.score >= 70 ? 'var(--red)' : r.score >= 40 ? 'var(--amber)' : 'var(--mint)';
+    return `<tr data-sup="${r.k}" tabindex="0"><td><b>${esc(r.s.name)}</b><small>${r.s.gstin}</small></td><td>${STATES[r.s.gstin.slice(0, 2)] || '—'}</td><td class="num">${r.s.bills}</td><td class="num">${r.open || '—'}</td><td class="num">${r.exposed ? inr(r.exposed) : '—'}</td><td class="filing ${r.s.late ? 'bad' : ''}">${r.s.filing}</td><td><div class="risk-cell"><div class="risk-bar"><span style="width:${r.score}%;background:${col}"></span></div><strong class="num" style="color:${col}">${r.score}</strong></div></td></tr>`;
+  }).join('');
+}
+function setoff(out, itc) {
+  const o = Object.assign({}, out), c = Object.assign({}, itc), used = { igst:0, cgst:0, sgst:0 };
+  const use = (from, to) => { const x = Math.min(c[from], o[to]); c[from] -= x; o[to] -= x; used[to] += x; };
+  use('igst', 'igst'); use('igst', 'cgst'); use('igst', 'sgst');
+  use('cgst', 'cgst'); use('cgst', 'igst'); use('sgst', 'sgst'); use('sgst', 'igst');
+  return { cash:o, used };
+}
+function heads() {
+  const E = S.totals.eligible;
+  let sh = BASE.itcShare;
+  if (!S.D.base) { const b = periodBooks(), tot = b.reduce((a, r) => a + tax(r), 0) || 1; sh = { igst:b.reduce((a, r) => a + r.igst, 0) / tot, cgst:b.reduce((a, r) => a + r.cgst, 0) / tot }; }
+  const itc = { igst:Math.round(E * sh.igst), cgst:Math.round(E * sh.cgst) };
+  itc.sgst = E - itc.igst - itc.cgst;
+  return { itc, ...setoff(outputOf(), itc) };
+}
+function renderLiability() {
+  const h = heads(), names = { igst:'IGST', cgst:'CGST', sgst:'SGST' };
+  $('#headsBody').innerHTML = Object.keys(names).map((k) => `<tr><td>${names[k]}</td><td>${inr(outputOf()[k])}</td><td>${inr(h.itc[k])}</td><td>${inr(h.used[k])}</td><td class="num">${inr(h.cash[k])}</td></tr>`).join('');
+  const sum = (o) => o.igst + o.cgst + o.sgst;
+  $('#headsFoot').innerHTML = `<tr><td>Total</td><td>${inr(sum(outputOf()))}</td><td>${inr(sum(h.itc))}</td><td>${inr(sum(h.used))}</td><td>${inr(sum(h.cash))}</td></tr>`;
+}
+function renderSources() {
+  const icons = {
+    books:'<svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></svg>',
+    g2b:'<svg viewBox="0 0 24 24"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-5h6v5M4 21h16"/></svg>',
+    bank:'<svg viewBox="0 0 24 24"><path d="M3 10h18L12 4zM5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>',
+    sales:'<svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg>',
+  };
+  const legacy = !!S.D.base, n = (x) => x.toLocaleString('en-IN');
+  const src = legacy
+    ? [['books', 'Purchase register', S.counts.total, 'Tally export, 29 Sep'], ['g2b', 'GSTR-2B and IMS', 2072, 'Portal JSON, draft view'], ['bank', 'Bank statement', 1986, 'HDFC current account CSV'], ['sales', 'Sales register', 1240, 'Feeds output tax']]
+    : [['books', 'Purchase register', S.D.books.length, S.baseSet.label], ['g2b', 'GSTR-2B and IMS', S.D.g2b.length, S.baseSet.label], ['bank', 'Bank statement', S.D.bank.length, S.baseSet.label], ['sales', 'Sales register', (S.D.sales || []).length, S.D.output ? 'Output tax for ' + periodOf() : 'No row for ' + periodOf()]];
+  $('#srcGrid').innerHTML = src.map(([ic, nm, c, sub]) => `<div class="src">${icons[ic]}<b>${nm}</b><strong class="num">${n(c)}</strong><span>${esc(sub)}</span><span class="ok">Imported</span></div>`).join('') +
+    `<label class="drop" id="drop"><input type="file" multiple accept=".csv,.json,text/csv,application/json" hidden id="fileIn"><b>Drop files here, or click</b>Purchase register, bank statement and sales register as CSV; GSTR-2B as CSV or the portal JSON. They are read in your browser and never uploaded.${S.srcNote ? '<span class="drop-note">' + esc(S.srcNote) + '</span>' : ''}</label>`;
+}
+
+function resolve(g, act, msg, label) {
+  const before = S.totals.eligible;
+  const delta = act === 'fix' ? -g.impact : act === 'add' ? g.impact : 0;
+  const why = explain(g), item = g.items[0], ty = TYPES[g.type];
+  S.resolved.set(g.key, delta); S.booksDelta += delta; S.resolvedCount++;
+  const idx = visibleGroups().findIndex((x) => x.key === g.key);
+  compute();
+  const vis = visibleGroups(); S.sel = (vis[idx] || vis[idx - 1] || vis[0] || {}).key || null; S.billIdx = 0;
+  const diff = S.totals.eligible - before;
+  // The decision log: what was decided, on what evidence, with what effect on the claim.
+  const entry = { id:++S.seq, at:new Date(), key:g.key, issue:ty.label, bucket:bucketOf(g), sup:supName(g.sup), gstin:S.D.suppliers[g.sup].gstin, invoices:g.bills.map((id) => rec(id).inv).join(' '), impact:g.impact, action:label || msg, outcome:msg, claimDelta:delta, eligibleDelta:diff, ims:item.ims ? item.ims.act : '', why };
+  S.decisions.push(entry);
+  renderAll();
+  toast(`<b>${esc(msg)}</b>${diff ? ` Eligible ITC ${diff > 0 ? 'up' : 'down'} ${inr(Math.abs(diff))}.` : ''} Logged.`, () => { S.resolved.delete(g.key); S.booksDelta -= delta; S.resolvedCount--; S.decisions = S.decisions.filter((d) => d.id !== entry.id); compute(); S.sel = g.key; renderAll(); });
+}
+function draftFor(g) {
+  const s = S.D.suppliers[g.sup], r = rec(g.bills[0]);
+  const invs = g.bills.map((id) => rec(id).inv).join(', ');
+  const sign = `Accounts team, ${buyer().name}`;
+  const signHi = `अकाउंट्स टीम, ${buyer().name}`;
+  if (g.type === 'missing2b') return { sub:`To ${s.name}: bills missing from GSTR-2B`, en:`Hi ${s.name} team,\n\nOur books show ${invs} for September 2026 (GST ${inr(g.impact)}), but ${g.bills.length > 1 ? 'they don\'t' : 'it doesn\'t'} appear in our GSTR-2B. Could you file or amend your GSTR-1 for September against our GSTIN ${buyer().gstin || 'our GSTIN'}?\n\nWe'll release the pending payment as soon as ${g.bills.length > 1 ? 'they show' : 'it shows'} up.\n\nThanks,\n${sign}`, hi:`नमस्ते ${s.name} टीम,\n\nहमारे खातों में सितंबर 2026 के इनवॉइस ${invs} (GST ${inr(g.impact)}) दर्ज हैं, लेकिन ये हमारे GSTR-2B में नहीं दिख रहे। कृपया हमारे GSTIN ${buyer().gstin || 'our GSTIN'} के साथ सितंबर का GSTR-1 फाइल या संशोधित करें।\n\nइनवॉइस दिखते ही हम बकाया भुगतान जारी कर देंगे।\n\nधन्यवाद,\n${signHi}` };
+  if (g.type === 'taxType' && !g.items[0].inter) return { sub:`To ${s.name}: credit note request for ${r.inv}`, en:`Hi ${s.name} team,\n\nInvoice ${r.inv} dated ${fdate(r.date)} was billed with IGST of ${inr(tax(r))}. Since we're both registered in Delhi, this is an intra-state supply and should carry CGST + SGST instead.\n\nPlease issue a credit note and a revised invoice, and update GSTR-1 accordingly.\n\nThanks,\n${sign}`, hi:`नमस्ते ${s.name} टीम,\n\nइनवॉइस ${r.inv} (${fdate(r.date)}) पर ${inr(tax(r))} का IGST लगाया गया है। हम दोनों दिल्ली में रजिस्टर्ड हैं, इसलिए यह राज्य के अंदर की सप्लाई है और इस पर CGST + SGST लगना चाहिए।\n\nकृपया क्रेडिट नोट और संशोधित इनवॉइस जारी करें, और GSTR-1 भी अपडेट करें।\n\nधन्यवाद,\n${signHi}` };
+  if (g.type === 'taxType') return { sub:`To ${s.name}: credit note request for ${r.inv}`, en:`Hi ${s.name} team,\n\nInvoice ${r.inv} dated ${fdate(r.date)} was billed with CGST + SGST. Since you're registered in ${STATES[s.gstin.slice(0, 2)]} and the goods were delivered to Delhi, this is an inter-state supply and should carry IGST of ${inr(tax(r))}.\n\nPlease issue a credit note and a revised invoice with IGST, and update GSTR-1 accordingly.\n\nThanks,\n${sign}`, hi:`नमस्ते ${s.name} टीम,\n\nइनवॉइस ${r.inv} (${fdate(r.date)}) पर CGST + SGST लगाया गया है। आप ${STATES[s.gstin.slice(0, 2)]} में रजिस्टर्ड हैं और माल दिल्ली में आया है, इसलिए यह अंतर-राज्यीय सप्लाई है और इस पर ${inr(tax(r))} का IGST लगना चाहिए।\n\nकृपया क्रेडिट नोट और IGST के साथ संशोधित इनवॉइस जारी करें, और GSTR-1 भी अपडेट करें।\n\nधन्यवाद,\n${signHi}` };
+  if (g.type === 'rate') { const i = g.items[0]; return { sub:`To ${s.name}: wrong GST rate on ${r.inv}`, en:`Hi ${s.name} team,\n\nInvoice ${r.inv} dated ${fdate(r.date)} charges ${r.rate}% GST on HSN ${r.hsn}. The applicable rate is ${i.mr}%${i.scrapped ? `, and the ${r.rate}% slab no longer exists after 22 Sep 2025` : ''}.\n\nPlease issue a credit note for the excess GST of ${inr(g.impact)} and correct your GSTR-1.\n\nThanks,\n${sign}`, hi:`नमस्ते ${s.name} टीम,\n\nइनवॉइस ${r.inv} (${fdate(r.date)}) पर HSN ${r.hsn} के लिए ${r.rate}% GST लगाया गया है, जबकि सही दर ${i.mr}% है।\n\nकृपया ${inr(g.impact)} के अतिरिक्त GST के लिए क्रेडिट नोट जारी करें और GSTR-1 में सुधार करें।\n\nधन्यवाद,\n${signHi}` }; }
+  if (g.type === 'amount') { const g2 = S.D.g2b.find((x) => x.id === g.items[0].g); return { sub:`To ${s.name}: value mismatch on ${r.inv}`, en:`Hi ${s.name} team,\n\nFor invoice ${r.inv} dated ${fdate(r.date)}, your GSTR-1 shows a taxable value of ${inr(g2.taxable)}, but the invoice we received is for ${inr(r.taxable)}.\n\nPlease amend GSTR-1 so both match.\n\nThanks,\n${sign}`, hi:`नमस्ते ${s.name} टीम,\n\nइनवॉइस ${r.inv} (${fdate(r.date)}) के लिए आपके GSTR-1 में कर योग्य मूल्य ${inr(g2.taxable)} दिखाया गया है, जबकि हमें मिला इनवॉइस ${inr(r.taxable)} का है।\n\nकृपया GSTR-1 में सुधार करें ताकि दोनों मेल खाएं।\n\nधन्यवाद,\n${signHi}` }; }
+  return { sub:`To ${s.name}`, en:`Hi ${s.name} team,\n\nWe found a difference on invoice ${r.inv}. Could you take a look?\n\nThanks,\n${sign}`, hi:`नमस्ते ${s.name} टीम,\n\nइनवॉइस ${r.inv} में अंतर मिला है। कृपया इसे देख लें।\n\nधन्यवाद,\n${signHi}` };
+}
+let DRAFT = null, LANG = 'en';
+function openDraft(g) {
+  DRAFT = draftFor(g); LANG = 'en';
+  $('#draftSub').textContent = DRAFT.sub; paintDraft(); openLayer('draftModal');
+}
+function paintDraft() {
+  const t = $('#draftText'); t.textContent = DRAFT[LANG]; t.lang = LANG;
+  $$('[data-lang]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.lang === LANG));
+}
+
+/* =====================================================================
+   Layers and toasts
+   ===================================================================== */
+let lastFocus = null;
+function openLayer(id) {
+  closeLayers(true); lastFocus = document.activeElement;
+  $('#' + id).classList.add('on'); $('#scrim').classList.add('on');
+  const f = id === 'ask' ? $('#askInput') : $('#' + id).querySelector('button'); setTimeout(() => f && f.focus(), 60);
+  if (id === 'ask' && !$('#msgs').children.length) greet();
+  if (id === 'chaos') renderChaos();
+}
+function closeLayers(silent) {
+  $$('.drawer.on, .modal.on').forEach((d) => d.classList.remove('on')); $('#scrim').classList.remove('on');
+  if (!silent && lastFocus) lastFocus.focus();
+}
+function toast(html, undo) {
+  const t = document.createElement('div'); t.className = 'toast';
+  t.innerHTML = `<span>${html}</span>${undo ? '<button type="button">Undo</button>' : ''}`;
+  if (undo) t.querySelector('button').onclick = () => { undo(); t.remove(); };
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), 5200);
+  while ($('#toasts').children.length > 3) $('#toasts').firstChild.remove();
+}
+function scan(label, then) {
+  const s = $('#scan'); $('#scanLabel').textContent = label;
+  s.classList.remove('on'); void s.offsetWidth; s.classList.add('on');
+  setTimeout(then, reduced ? 10 : 950);
+}
+
+/* =====================================================================
+   Copilot (demo): intent matching over the engine's output
+   ===================================================================== */
+// Suggested questions use suppliers that are actually in the loaded data.
+function suggestions() {
+  const top = {}; S.groups.filter((g) => ['risk', 'reverse'].includes(bucketOf(g))).forEach((g) => { top[g.sup] = (top[g.sup] || 0) + g.impact; });
+  const worst = Object.entries(top).sort((a, b) => b[1] - a[1])[0];
+  const draft = S.groups.find((g) => ['missing2b', 'taxType', 'rate', 'amount'].includes(g.type));
+  return ['Which suppliers put the most ITC at risk?', worst ? `Why is ${supName(worst[0])} flagged?` : 'What is flagged this month?', 'How much GST do I pay this month?', 'What should I do before 14 Oct?', draft ? `Draft a follow-up to ${supName(draft.sup)}` : 'Draft a follow-up'];
+}
+function greet() {
+  addMsg('ai', `<p>This period has <b>${S.groups.length} open issues</b> worth ${inr(S.groups.reduce((a, g) => a + g.impact, 0))} in this sample. Ask me anything about them.</p>`, 0);
+  $('#suggest').innerHTML = suggestions().map((q) => `<button type="button">${q}</button>`).join('');
+}
+function engineFigureValues() {
+  const values = new Set();
+  const add = (n) => { if (Number.isFinite(n)) values.add(Math.round(n)); };
+  Object.values(S.totals || {}).forEach(add);
+  add((S.totals?.risk || 0) + (S.totals?.reverse || 0));
+  const h = heads();
+  [h.itc, h.used, h.cash].forEach((part) => Object.values(part).forEach(add));
+  (S.groups || []).forEach((g) => { add(g.impact); (g.items || []).forEach((item) => Object.values(item).forEach(add)); });
+  // Sums the copilot shows: per supplier (all issues, and at-risk plus to-reverse), per bucket, and everything open.
+  const sums = new Map(), sum = (k, n) => sums.set(k, (sums.get(k) || 0) + n);
+  (S.groups || []).forEach((g) => { const b = bucketOf(g); sum('all', g.impact); sum('b:' + b, g.impact); sum('s:' + g.sup, g.impact); if (b === 'risk' || b === 'reverse') sum('sr:' + g.sup, g.impact); });
+  sums.forEach(add);
+  [S.D.books, S.D.g2b, S.D.bank].forEach((rows) => (rows || []).forEach((row) => {
+    add(row.taxable); add(row.cgst); add(row.sgst); add(row.igst); add(row.amount);
+    if (row.taxable !== undefined) { add(tax(row)); add(total(row)); }
+  }));
+  return values;
+}
+function answerFigures(html) {
+  const text = html.replace(/<[^>]*>/g, ' ');
+  return [...text.matchAll(/₹\s*([\d,]+(?:\.\d+)?)\s*(lakh|L)?\b/gi)].map((match) => {
+    const amount = Number(match[1].replace(/,/g, ''));
+    return { amount, lakh:!!match[2] };
+  }).filter((f) => Number.isFinite(f.amount));
+}
+function verifyAnswerFigures(html) {
+  const figures = answerFigures(html), available = engineFigureValues();
+  const ok = (f) => f.lakh ? [...available].some((v) => (v / 100000).toFixed(1) === f.amount.toFixed(1)) : available.has(Math.round(f.amount));
+  return { count:figures.length, verified:figures.every(ok) };
+}
+function addMsg(who, html, verification) {
+  const m = document.createElement('div'); m.className = 'msg ' + who; m.innerHTML = html;
+  if (who === 'ai' && verification && verification.count) {
+    const icon = verification.verified ? '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M12 7v5m0 4h.01"/></svg>';
+    const text = verification.verified ? `${verification.count} figure${verification.count > 1 ? 's' : ''} checked against engine output` : 'Figure verification failed';
+    m.insertAdjacentHTML('beforeend', `<div class="verified ${verification.verified ? '' : 'failed'}">${icon}${text}</div>`);
+  }
+  $('#msgs').appendChild(m); m.scrollIntoView({ block:'end', behavior:reduced ? 'auto' : 'smooth' });
+  return m;
+}
+const refBtn = (g) => `<button class="ref" data-goto="${esc(g.key)}">${esc(rec(g.bills[0]).inv)}${g.bills.length > 1 ? ' +' + (g.bills.length - 1) : ''}</button>`;
+function answer(q) {
+  const t = q.toLowerCase();
+  const sup = Object.keys(S.D.suppliers).find((k) => t.includes(S.D.suppliers[k].name.toLowerCase().split(' ')[0].toLowerCase()) || t.includes(S.D.suppliers[k].name.toLowerCase()));
+  if (/draft|follow|message|email|whatsapp|write/.test(t)) {
+    const g = S.groups.find((x) => (!sup || x.sup === sup) && ['missing2b', 'taxType', 'rate', 'amount'].includes(x.type));
+    if (!g) return { html:'<p>There is no open issue that needs a supplier message right now.</p>' };
+    setTimeout(() => openDraft(g), 500);
+    return { html:`<p>Opening a draft to <b>${esc(supName(g.sup))}</b> about ${refBtn(g)}, in English and Hindi.</p>` };
+  }
+  if (/why|flag|explain|wrong|issue with/.test(t) && sup) {
+    const gs = S.groups.filter((x) => x.sup === sup);
+    if (!gs.length) return { html:`<p>${esc(supName(sup))} has no open issues this month. All their bills matched across books, GSTR-2B and bank.</p>` };
+    return { html:gs.map((g) => `<p><b>${TYPES[g.type].label}</b> ${refBtn(g)}: ${esc(explain(g))}</p>`).join('') };
+  }
+  if (/risk|most|top|worst|exposed/.test(t)) {
+    const by = {};
+    S.groups.filter((g) => ['risk', 'reverse'].includes(bucketOf(g))).forEach((g) => { (by[g.sup] = by[g.sup] || { amt:0, gs:[] }).amt += g.impact; by[g.sup].gs.push(g); });
+    const top = Object.entries(by).sort((a, b) => b[1].amt - a[1].amt).slice(0, 5);
+    return { html:`<p>Top suppliers by credit at risk or to reverse:</p><ul>${top.map(([k, v]) => `<li><b>${esc(supName(k))}</b>: ${inr(v.amt)} ${v.gs.map(refBtn).join('')}</li>`).join('')}</ul>` };
+  }
+  if (/pay|payable|owe|liabil|how much|cash/.test(t)) {
+    const h = heads(), T = S.totals;
+    return { html:`<p>Output tax is ${inr(T.output)} and credit you can defend is ${inr(T.eligible)}, so you pay <b>${inr(T.net)}</b> in cash: IGST ${inr(h.cash.igst)}, CGST ${inr(h.cash.cgst)}, SGST ${inr(h.cash.sgst)}.</p><p>That assumes you fix the ${inr(T.risk + T.reverse)} flagged as at risk or to reverse.</p>` };
+  }
+  if (/before|14|ims|deadline|to do|todo|first|plan/.test(t)) {
+    const pick = (types) => S.groups.filter((g) => types.includes(g.type));
+    const rows = [['Reject or keep pending in IMS', pick(['taxType', 'rate', 'amount'])], ['Accept in IMS after booking', pick(['missingBooks'])], ['Chase the supplier, keep the claim pending', pick(['missing2b'])], ['Fix in your books', pick(['duplicate', 'gstin', 'taxValue'])]].filter((r) => r[1].length);
+    return { html:`<p>Draft GSTR-2B for September is generated on 14 Oct. Bills you don't act on in IMS are deemed accepted, so:</p><ul>${rows.map(([l, gs]) => `<li><b>${l}</b>: ${gs.map(refBtn).join('')}</li>`).join('')}</ul>` };
+  }
+  return { html:`<p>In this demo I can answer questions about this month's reconciliation. Try one of these:</p>` + `<ul>${suggestions().map((s) => `<li>${s}</li>`).join('')}</ul>` };
+}
+function ask(q) {
+  if (!q.trim()) return;
+  addMsg('me', esc(q));
+  const wait = addMsg('ai', '<span class="typing"><i></i><i></i><i></i></span>');
+  setTimeout(() => {
+    const a = answer(q); wait.remove();
+    addMsg('ai', a.html, verifyAnswerFigures(a.html));
+  }, reduced ? 50 : 650);
+}
+
+/* =====================================================================
+   Chaos Mode: break a clean bill, re-run the engine, score the result
+   ===================================================================== */
+const BREAKS = [
+  ['amount', 'Change the amount in GSTR-2B', 'Supplier reports a different value'],
+  ['gstin', 'Mistype the GSTIN in your books', 'One character off'],
+  ['rate28', 'Charge the scrapped 28% rate', 'Both sides billed at 28%'],
+  ['taxtype', 'Swap the tax type', 'IGST and CGST + SGST switched'],
+  ['remove', 'Delete it from GSTR-2B', 'Supplier never reported it'],
+  ['dup', 'Enter it twice in your books', 'Same bill, new separator'],
+  ['reformat', 'Reformat the invoice number', 'Trap: same bill, written differently. Should NOT be flagged'],
+];
+const TRAP_BREAKS = new Set(['reformat']);
+function renderChaos() {
+  const c = S.chaos;
+  $('#cPlanted').textContent = c.planted; $('#cCaught').textContent = c.caught; $('#cMissed').textContent = c.missed; $('#cIgnored').textContent = `${c.ignored || 0}/${c.traps || 0}`;
+  const chosen = ($('input[name=bill]:checked') || {}).value, how = ($('input[name=brk]:checked') || {}).value || 'amount';
+  $('#billPicks').innerHTML = (S.clean || []).map((id, n) => {
+    const b = S.D.books.find((x) => x.id === id) || (S.baseSet.D.books.find((x) => x.id === id)), done = c.broken.has(id);
+    const isChecked = chosen ? chosen === id : !done && (S.clean || []).filter((x) => !c.broken.has(x))[0] === id;
+    return `<label class="pick ${done ? 'done' : ''}"><input type="radio" name="bill" value="${id}" ${done ? 'disabled' : ''} ${isChecked && !done ? 'checked' : ''}><span>${esc(supName(b.sup))}<small>${esc(b.inv)}, ${inr(b.taxable)} taxable</small></span><span class="num">${inr(tax(b))}</span></label>`;
+  }).join('');
+  $('#breakPicks').innerHTML = BREAKS.map(([k, l, s]) => `<label class="pick"><input type="radio" name="brk" value="${k}" ${k === how ? 'checked' : ''}><span>${l}<small>${s}</small></span><span></span></label>`).join('');
+  $('#deltaRow').style.display = how === 'amount' ? 'flex' : 'none';
+  $('#chaosLog').innerHTML = c.log.slice().reverse().map((l) => `<div>${l}</div>`).join('');
+  $('#breakBtn').disabled = !(S.clean || []).length || S.clean.every((id) => c.broken.has(id));
+  $('#breakBtn').lastChild.textContent = TRAP_BREAKS.has(how) ? 'Reformat it' : 'Break it';
+  const chip = $('#chaosChip'); chip.classList.toggle('on', c.planted + (c.traps || 0) > 0);
+  $('#chaosChipText').textContent = `Chaos: ${c.caught} of ${c.planted} caught` + (c.traps ? `, ${c.ignored} of ${c.traps} ignored${c.falseAlarms ? ', ' + c.falseAlarms + ' false alarm' + (c.falseAlarms > 1 ? 's' : '') : ''}` : '');
+}
+function breakIt() {
+  const id = ($('input[name=bill]:checked') || {}).value, how = ($('input[name=brk]:checked') || {}).value;
+  if (!id || !how) return;
+  const D = S.D, b = D.books.find((x) => x.id === id), g = D.g2b.find((x) => x.sup === b.sup && canon(x.inv) === canon(b.inv) && fy(x.date) === fy(b.date));
+  const before = new Set(runEngine(D).issues.map((i) => i.type + '|' + i.bills.join()));
+  const label = BREAKS.find((x) => x[0] === how)[1];
+  const split = (r, tx) => { if (r.igst) r.igst = tx; else { r.cgst = Math.round(tx / 2); r.sgst = tx - r.cgst; } };
+  let targets = [id], bucketMove = 'diff';
+  const trap = TRAP_BREAKS.has(how), openBefore = S.groups.length;
+  if (how === 'reformat') { const n = g && reformatInv(g.inv, b.inv); if (!n) return toast('<b>Could not reformat that invoice number.</b> Pick another bill.'); g.inv = n; }
+  if (how === 'amount') { const d = +$('#deltaIn').value || 0; g.taxable += d; split(g, Math.round(g.taxable * b.rate / 100)); }
+  if (how === 'gstin') { const s = D.suppliers[b.sup].gstin; b.gstin = s.slice(0, 5) + CS[(CS.indexOf(s[5]) + 1) % 36] + s.slice(6); }
+  if (how === 'rate28') { const old = tax(b); b.rate = 28; split(b, Math.round(b.taxable * .28)); if (g) { split(g, Math.round(g.taxable * .28)); } if (D.base) S.booksDelta += tax(b) - old; }
+  if (how === 'taxtype') { for (const r of [b, g]) { if (!r) continue; const tx = tax(r); if (r.igst) { r.igst = 0; r.cgst = Math.round(tx / 2); r.sgst = tx - r.cgst; } else { r.igst = tx; r.cgst = 0; r.sgst = 0; } } }
+  if (how === 'remove') { D.g2b = D.g2b.filter((x) => x !== g); bucketMove = 'unmatched'; }
+  if (how === 'dup') { const c = Object.assign({}, b, { id:id + 'D', inv:b.inv.includes('-') ? b.inv.replace('-', '/') : b.inv.replace('/', '-') }); D.books.push(c); targets.push(c.id); if (D.base) S.booksDelta += tax(c); bucketMove = 'dup'; if (D.base) S.counts.total++; }
+  if (D.base && !trap) { if (how !== 'dup') S.counts.matched--; S.counts[bucketMove]++; }
+  if (trap) S.chaos.traps++; else { S.chaos.broken.add(id); S.chaos.planted++; }
+  closeLayers(true);
+  document.getElementById('queue').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' });
+  S.filter = 'all'; S.query = ''; $('#search').value = '';
+  scan(`Re-checking ${S.counts.total.toLocaleString('en-IN')} bills`, () => {
+    const res = runEngine(D);
+    const fresh = res.issues.filter((i) => !before.has(i.type + '|' + i.bills.join()) && i.bills.some((x) => targets.includes(x)));
+    compute();
+    const sup = supName(b.sup);
+    S.newKeys = new Set(S.groups.filter((gr) => gr.items.some((it) => fresh.includes(it) || fresh.some((f) => f.type === it.type && f.bills.join() === it.bills.join()))).map((gr) => gr.key));
+    if (trap) {
+      // A correct bill written differently. Staying quiet is the pass; any new issue is a false alarm.
+      if (fresh.length) {
+        S.chaos.falseAlarms++;
+        const names = [...new Set(fresh.map((f) => TYPES[f.type].label))].join(', ');
+        S.chaos.log.push(`<b class="m">False alarm</b> ${esc(label.toLowerCase())} on ${esc(sup)}: flagged ${esc(names)}`);
+        toast(`<b>False alarm.</b> ${esc(names)} on ${esc(sup)} after only a reformat.`);
+      } else {
+        S.chaos.ignored++;
+        S.chaos.log.push(`<b class="c">Ignored</b> ${esc(label.toLowerCase())} on ${esc(sup)} (${esc(b.inv)} vs ${esc(g.inv)}): still matched, no flag`);
+        toast(`<b>Still matched. No false flag.</b> ${esc(b.inv)} and ${esc(g.inv)} are the same bill; ${S.groups.length} open issues, ${S.groups.length === openBefore ? 'unchanged' : 'was ' + openBefore}.`);
+      }
+    } else if (fresh.length) {
+      S.chaos.caught++;
+      const top = S.groups.find((gr) => S.newKeys.has(gr.key));
+      if (top) { S.sel = top.key; S.billIdx = Math.max(0, top.items.findIndex((it) => it.bills.some((x) => targets.includes(x)))); }
+      const names = [...new Set(fresh.map((f) => TYPES[f.type].label))].join(', ');
+      S.chaos.log.push(`<b class="c">Caught</b> ${esc(label.toLowerCase())} on ${esc(sup)}: ${esc(names)} in ${res.ms.toFixed(1)} ms`);
+      toast(`<b>Caught in ${res.ms.toFixed(1)} ms.</b> ${esc(names)} on ${esc(sup)}.`);
+    } else {
+      S.chaos.missed++;
+      S.chaos.log.push(`<b class="m">Missed</b> ${esc(label.toLowerCase())} on ${esc(sup)}`);
+      toast(`<b>Not flagged.</b> The change stayed within tolerance on ${esc(sup)}.`);
+    }
+    renderAll();
+    setTimeout(() => { S.newKeys = new Set(); }, 2000);
+  });
+}
+
+/* =====================================================================
+   Upload: CSVs are parsed in the browser, never sent anywhere
+   ===================================================================== */
+function load(set) { reset(set); compute(); renderAll(); }
+async function handleFiles(files) {
+  const csvs = files.filter((f) => /\.(csv|json)$/i.test(f.name) || f.type === 'text/csv' || f.type === 'application/json');
+  if (!csvs.length) return toast('<b>CSV or GSTR-2B JSON only.</b> Export the register and bank statement as CSV; GSTR-2B can be the portal JSON.');
+  const errors = [], got = [], fileNotes = [], staged = Object.assign({}, S.up);
+  for (const f of csvs) {
+    try {
+      const r = Ingest.ingestFile(f.name, await f.text());
+      staged[r.kind] = r; got.push(`${r.kind === 'g2b' ? 'GSTR-2B' : r.kind === 'books' ? 'books' : r.kind} (${r.rows.length})`); errors.push(...r.errors); fileNotes.push(...(r.notes || []));
+    } catch (e) { toast(`<b>Could not read ${esc(f.name)}.</b> ${esc(e.message.replace(f.name + ': ', ''))}`); }
+  }
+  if (!got.length) return;
+  const need = ['books', 'g2b'].filter((k) => !staged[k]);
+  S.up = staged;
+  if (need.length) return toast(`<b>Got ${esc(got.join(', '))}.</b> Add the ${need.map((k) => (k === 'g2b' ? 'GSTR-2B' : 'purchase register')).join(' and ')} file to run the reconciliation.`);
+  try {
+    const built = Ingest.buildDataset({ books:staged.books.rows, g2b:staged.g2b.rows, bank:staged.bank ? staged.bank.rows : [], sales:staged.sales ? staged.sales.rows : [] });
+    Ingest.withPeriod(built.D, built.sales);
+    S.srcNote = [errors.length ? `${errors.length} row${errors.length > 1 ? 's' : ''} skipped: ${errors[0]}` : '', ...fileNotes, ...built.notes].filter(Boolean).join(' ');
+    load({ D:built.D, label:'Uploaded files' });
+    toast(`<b>Reconciled ${built.D.books.length.toLocaleString('en-IN')} books against ${built.D.g2b.length.toLocaleString('en-IN')} GSTR-2B rows.</b> ${S.groups.length} open issues.${errors.length ? ` ${errors.length} bad row${errors.length > 1 ? 's' : ''} skipped.` : ''}`);
+    if (errors.length) console.warn('Skipped rows:\n' + errors.join('\n'));
+    document.getElementById('overview').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' });
+  } catch (e) { toast(`<b>Could not run the reconciliation.</b> ${esc(e.message)} Your previous data is unchanged.`); }
+}
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function renderMeta() {
+  const b = buyer(), [y, m] = periodOf().split('-').map(Number), name = `${MONTH_NAMES[m - 1]} ${y}`;
+  $('.company b').textContent = b.name; $('.company span').textContent = b.gstin ? 'GSTIN ' + b.gstin : 'From uploaded files';
+  $('.crumb').innerHTML = `${esc(b.name)} <span aria-hidden="true">/</span> <b>${name} return</b>`;
+  $('#h1').innerHTML = `Before you file ${MONTH_NAMES[m - 1]}, fix <span class="amt num" id="h1Amt">${lakh(S.totals.risk + S.totals.reverse)}</span>.`;
+  document.title = `Rekora | ${name} reconciliation`;
+}
+
+/* =====================================================================
+   Export, theme, events
+   ===================================================================== */
+function exportJSON() {
+  const h = heads(), T = S.totals, o = outputOf(), [py, pm] = periodOf().split('-');
+  const draft = { gstin:buyer().gstin, ret_period:pm + py, generated_by:'Rekora prototype (draft, verify before filing)',
+    sup_details:{ osup_det:{ iamt:o.igst, camt:o.cgst, samt:o.sgst } },
+    itc_elg:{ itc_avl:[{ ty:'OTH', iamt:h.itc.igst, camt:h.itc.cgst, samt:h.itc.sgst }], itc_net:{ iamt:h.itc.igst, camt:h.itc.cgst, samt:h.itc.sgst } },
+    tax_paid_cash:{ iamt:h.cash.igst, camt:h.cash.cgst, samt:h.cash.sgst, total:T.net },
+    rekora:{ itc_at_risk:T.risk, itc_to_reverse:T.reverse, potential_credit_to_review:T.recover, open_issues:S.groups.length } };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(draft, null, 2)], { type:'application/json' }));
+  a.download = `GSTR-3B_draft_${pm}${py}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('<b>GSTR-3B draft downloaded.</b> Net cash payable ' + inr(T.net) + '.');
+}
+const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+const MOON = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>';
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $('#themeIcon').innerHTML = t === 'dark' ? SUN : MOON;
+  $('#themeBtn').setAttribute('aria-label', t === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  $('meta[name=theme-color]').content = t === 'dark' ? '#0A1A17' : '#EDF2EF';
+  try { localStorage.setItem('rekora-theme', t); } catch (e) {}
+}
+function select(key) { S.sel = key; S.billIdx = 0; renderQueue(); renderEvidence(); }
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button, [data-sup], label.drop');
+  if (!t) { if (e.target === $('#scrim')) closeLayers(); return; }
+  if (t.matches('.q-row')) return select(t.dataset.key);
+  if (t.dataset.filter) { S.filter = S.filter === t.dataset.filter && t.classList.contains('bucket') ? 'all' : t.dataset.filter; renderQueue(); renderHero(); if (t.classList.contains('bucket')) document.getElementById('queue').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' }); return; }
+  if (t.dataset.bill !== undefined) { S.billIdx = +t.dataset.bill; return renderEvidence(); }
+  if (t.dataset.act) {
+    const g = S.groups.find((x) => x.key === S.sel), a = ACTIONS[g.type][+t.dataset.n];
+    return t.dataset.act === 'draft' ? openDraft(g) : resolve(g, t.dataset.act, a[2], a[0]);
+  }
+  if (t.dataset.open) return openLayer(t.dataset.open);
+  if (t.hasAttribute('data-close')) return closeLayers();
+  if (t.hasAttribute('data-export')) return exportJSON();
+  if (t.hasAttribute('data-export-log')) return exportLog();
+  if (t.hasAttribute('data-export-queue')) return exportQueue();
+  if (t.dataset.lang) { LANG = t.dataset.lang; return paintDraft(); }
+  if (t.dataset.goto) { closeLayers(true); S.filter = 'all'; select(t.dataset.goto); renderHero(); document.getElementById('queue').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' }); return; }
+  if (t.dataset.sup) { S.query = S.D.suppliers[t.dataset.sup].name; $('#search').value = S.query; S.filter = 'all'; renderQueue(); renderHero(); const v = visibleGroups()[0]; if (v) select(v.key); document.getElementById('queue').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' }); return; }
+  if (t.closest('#suggest')) return ask(t.textContent);
+  if (t.id === 'themeBtn') return setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  if (t.id === 'rerunBtn') return scan(`Re-checking ${S.counts.total.toLocaleString('en-IN')} bills`, () => { compute(); renderAll(); toast(`<b>Re-checked in ${S.lastMs.toFixed(1)} ms.</b> ${S.groups.length} open issues.`); });
+  if (t.id === 'breakBtn') return breakIt();
+  if (t.id === 'supMore') { S.allSup = !S.allSup; return renderSuppliers(); }
+  if (t.id === 'resetBtn') { reset(); compute(); renderAll(); toast(`<b>Data reset.</b> Back to the loaded ${esc(S.baseSet.label.toLowerCase())}.`); return; }
+  if (t.id === 'loadDemo') { if (!window.REKORA_DEMO) return toast('The bundled demo month is not available.'); S.up = {}; S.srcNote = ''; load(demoSet()); return toast(`<b>Demo month loaded.</b> ${S.D.books.length.toLocaleString('en-IN')} books, ${S.groups.length} open issues.`); }
+  if (t.id === 'copyDraft') { const txt = DRAFT[LANG]; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('<b>Copied.</b> Paste it into email or WhatsApp.')).catch(() => toast('Select the text and copy it manually.')); return; }
+});
+document.addEventListener('change', (e) => { if (e.target.name === 'brk' || e.target.name === 'bill') renderChaos(); if (e.target.id === 'fileIn' && e.target.files.length) { const f = [...e.target.files]; e.target.value = ''; handleFiles(f); } });
+document.addEventListener('keydown', (e) => {
+  const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if (e.key === 'Escape') return closeLayers();
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return $('#search').focus(); }
+  if (typing) return;
+  if (e.key === '/') { e.preventDefault(); return openLayer('ask'); }
+  if (e.key === 'j' || e.key === 'k') {
+    const v = visibleGroups(); if (!v.length) return;
+    const i = v.findIndex((g) => g.key === S.sel), n = Math.max(0, Math.min(v.length - 1, i + (e.key === 'j' ? 1 : -1)));
+    select(v[n].key); const row = $(`.q-row[data-key="${CSS.escape(v[n].key)}"]`); row && row.scrollIntoView({ block:'nearest' });
+  }
+  if (e.key === 'Enter' && document.activeElement.matches('tr[data-sup]')) document.activeElement.click();
+});
+$('#search').addEventListener('input', (e) => { S.query = e.target.value; renderQueue(); const v = visibleGroups(); if (v.length && !v.find((g) => g.key === S.sel)) select(v[0].key); });
+$('#askForm').addEventListener('submit', (e) => { e.preventDefault(); const i = $('#askInput'); ask(i.value); i.value = ''; });
+['dragover', 'dragleave', 'drop'].forEach((ev) => document.addEventListener(ev, (e) => {
+  const d = e.target.closest && e.target.closest('#drop'); if (!d) return; e.preventDefault();
+  d.classList.toggle('over', ev === 'dragover');
+  if (ev === 'drop') handleFiles([...e.dataTransfer.files]);
+}));
+// Scroll-spy for the sidebar
+const spy = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) $$('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.nav === en.target.id)); }), { rootMargin:'-40% 0px -55% 0px' });
+['overview', 'queue', 'suppliers', 'liability', 'sources', 'accuracy'].forEach((id) => spy.observe(document.getElementById(id)));
+
+/* Boot */
+let saved = null; try { saved = localStorage.getItem('rekora-theme'); } catch (e) {}
+setTheme(saved || 'dark');
+reset(); compute(); renderAll();
+</script>
+</body>
+</html>

@@ -26,7 +26,26 @@ No install, no build step.
 node tools/serve.js 8765     # then open http://localhost:8765
 ```
 
-or open `index.html` directly. It starts on a bundled demo month (a fictional distributor, September 2026).
+or open `index.html` directly. It starts on a bundled demo month (a fictional distributor, September 2026) and works offline: fonts and libraries are bundled.
+
+The first screen asks how you want to explore:
+
+- **Guided:** one step at a time. Each feature opens when you reach it, so nothing competes for attention.
+- **Full access:** every step open at once.
+
+The choice settles into a toggle in the top bar and can be switched at any time. `?mode=full` or `?mode=guided` in the URL skips the question, which is useful on stage.
+
+The seven steps:
+
+1. **Bring in your month:** demo data or your own files.
+2. **Reconcile:** every mismatch, ranked by ₹.
+3. **Review an issue:** books, GSTR-2B and bank side by side, with the reason, IMS advice and actions.
+4. **Decision log:** what was decided, with the credit waterfall and exports.
+5. **Look deeper:** supplier risk, unusual bills and Benford, Chaos Mode and accuracy.
+6. **Ask Rekora.**
+7. **File the return:** Section 49 set-off, deadlines and the GSTR-3B draft.
+
+Light and dark themes follow the laptop's setting. Keyboard: `/` ask, `J` `K` move between issues, `Ctrl K` search. The previous single-page dashboard is still available at `classic.html`.
 
 - **Upload your own:** drop the purchase register, bank statement and sales register as CSV and GSTR-2B as CSV or the portal JSON. Column names are matched loosely. Everything is read in the browser and nothing is uploaded. `data/demo/` has a complete set to try.
 - **Chaos Mode:** break a clean bill in six ways and watch the engine catch it, or reformat an invoice number and watch it correctly stay quiet.
@@ -72,8 +91,19 @@ A static browser app in vanilla JavaScript, so it runs on any laptop and sensiti
 - `engine.js`: deterministic matching and GST rules. Used by the dashboard and the Node tools alike, so the accuracy numbers are the demo's own numbers.
 - `ingest.js`: CSV and GSTR-2B JSON parsing, column mapping, row validation, supplier resolution.
 - `ml.js`: Isolation Forest and Benford.
-- `index.html`: dashboard, evidence panel, Chaos Mode, decision log, Ask Rekora.
+- `index.html`, `assets/app.js`, `assets/app.css`: the guided seven-step app. `assets/fonts` and `assets/vendor` hold the self-hosted Inter fonts and Lenis (smooth scroll), so nothing loads from a CDN.
+- `classic.html`: the earlier single-page dashboard, kept for reference.
 - `tools/`: generator, evaluator, checks.
+
+## Deploy
+
+It is a static site with no build step, so any static host works. The site root is the repository root.
+
+- **Netlify or Cloudflare Pages:** connect the repo, leave the build command empty, and set the publish directory to `/`.
+- **Vercel:** import the repo with Framework Preset "Other" and no build command.
+- **GitHub Pages:** Settings → Pages → deploy from the default branch, root folder.
+
+Everything runs in the visitor's browser. Uploaded files never leave their machine.
 
 ## Not built yet
 
