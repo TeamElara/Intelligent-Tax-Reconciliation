@@ -1,4 +1,21 @@
 {
+  "ml": {
+    "model": "Isolation Forest",
+    "billsScored": 38359,
+    "flagged": 767,
+    "flaggedShare": 0.02,
+    "threshold": 0.613,
+    "plantedSpikes": 137,
+    "spikesFound": 137,
+    "flaggedOnRuleErrors": 45,
+    "ms": 285,
+    "benford": {
+      "mad": 0.0046,
+      "chi2": 111.9,
+      "verdict": "close conformity",
+      "n": 38359
+    }
+  },
   "generated": {
     "seed": 42,
     "suppliers": 300,
@@ -204,8 +221,8 @@
     "impactAccuracy": 1,
     "falsePositives": 0,
     "unexplained": 0,
-    "engineMs": 6905,
-    "billsPerSecond": 5579
+    "engineMs": 6667,
+    "billsPerSecond": 5779
   },
   "traps": {
     "total": 28777,

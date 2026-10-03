@@ -5,6 +5,7 @@
 const fs = require('fs'), path = require('path');
 const E = require('../engine.js');
 const G = require('./gen.js');
+const ML = require('../ml.js');
 
 function readCsv(file) {
   const lines = fs.readFileSync(file, 'utf8').trim().split('\n'), head = lines.shift().split(',');
@@ -46,7 +47,14 @@ function evaluate(data) {
     P += m.planted; D_ += m.detected; FP += m.falsePositives; rp += m.rupeesPlanted; rc += m.rupeesCaught; br += m.bucketRight; ir += m.impactRight;
   }
   const trapTotal = Object.values(trapCats).reduce((a, c) => a + c.count, 0), trapFlag = Object.values(trapCats).reduce((a, c) => a + c.flagged, 0);
+  // Anomaly model on the same books. Planted spikes are the ground truth it is measured against; every flag is a review item, not an error.
+  const tm = Date.now(), mlr = ML.detect(D), mlMs = Date.now() - tm, bf = ML.benford(D);
+  const spikeIds = new Set(labels.filter((l) => l.type === 'spike').flatMap((l) => l.ids)), flaggedIds = new Set(mlr.flags.map((f) => f.bill));
+  const ruleIds = new Set(labels.filter((l) => l.type !== 'spike').flatMap((l) => l.ids));
+  const ml = { model:'Isolation Forest', billsScored:mlr.n, flagged:mlr.flags.length, flaggedShare:+(mlr.flags.length / Math.max(1, mlr.n)).toFixed(4), threshold:mlr.threshold, plantedSpikes:spikeIds.size, spikesFound:[...spikeIds].filter((id) => flaggedIds.has(id)).length,
+    flaggedOnRuleErrors:mlr.flags.filter((f) => ruleIds.has(f.bill)).length, ms:mlMs, benford:bf && bf.applicable ? { mad:bf.mad, chi2:bf.chi2, verdict:bf.verdict, n:bf.n } : null };
   return {
+    ml,
     generated:{ seed:data.cfg.seed, suppliers:Object.keys(D.suppliers).length, books:D.books.length, g2b:D.g2b.length, bank:D.bank.length, from:data.cfg.from, to:data.cfg.to, plantedTypes:types.length, planted:P },
     perType:per,
     overall:{ recall:+(D_ / P).toFixed(4), precision:+(D_ / (D_ + FP)).toFixed(4), weightedRecall:+(rc / rp).toFixed(4), rupeesPlanted:rp, rupeesCaught:rc, bucketAccuracy:+(br / D_).toFixed(4), impactAccuracy:+(ir / D_).toFixed(4), falsePositives:FP, unexplained:unexplained.length, engineMs:ms, billsPerSecond:Math.round(D.books.length / (ms / 1000)) },
@@ -78,6 +86,7 @@ if (require.main === module) {
   console.log('type'.padEnd(14), 'planted detect missed  FP  recall  prec   bucket impact  ₹caught/₹planted');
   for (const [t, m] of Object.entries(r.perType)) console.log(t.padEnd(14), String(m.planted).padStart(7), String(m.detected).padStart(6), String(m.missed).padStart(6), String(m.falsePositives).padStart(3), pct(m.recall), pct(m.precision), pct(m.detected ? m.bucketRight / m.detected : null), pct(m.detected ? m.impactRight / m.detected : null), ' ', m.rupeesCaught.toLocaleString('en-IN') + '/' + m.rupeesPlanted.toLocaleString('en-IN'));
   const o = r.overall;
+  console.log(`anomaly model (${r.ml.model}): found ${r.ml.spikesFound} of ${r.ml.plantedSpikes} planted spikes, flagged ${(r.ml.flaggedShare * 100).toFixed(1)}% of ${r.ml.billsScored} bills, ${r.ml.ms} ms; Benford MAD ${r.ml.benford && r.ml.benford.mad} (${r.ml.benford && r.ml.benford.verdict})`);
   console.log(`\noverall recall ${pct(o.recall)}  precision ${pct(o.precision)}  ₹-weighted recall ${pct(o.weightedRecall)}  bucket ${pct(o.bucketAccuracy)}  impact ${pct(o.impactAccuracy)}`);
   console.log(`traps: ${r.traps.flagged} flagged of ${r.traps.total}`, Object.entries(r.traps.byKind).map(([k, v]) => `${k} ${v.flagged}/${v.count}`).join(', '));
   if (r.unexplainedSample.length) console.log('unexplained flags (sample):', JSON.stringify(r.unexplainedSample));

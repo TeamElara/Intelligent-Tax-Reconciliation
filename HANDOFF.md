@@ -37,12 +37,12 @@ Design rule (say it in the pitch): **Rules compute. ML flags. The LLM explains. 
 - Every rupee on screen comes from the engine. Keep it that way.
 
 ## Planned architecture (from the deck)
-**Roadmap only; not part of the current prototype:** React + Vite front end, FastAPI + Pydantic, DuckDB/Polars for joins (SQLite in demo), RapidFuzz + SciPy Hungarian for matching, scikit-learn Isolation Forest + SHAP + Benford for anomalies, and an LLM copilot. The current prototype is a static browser app with rule-based reconciliation and intent matching.
+**Roadmap only; not part of the current prototype:** React + Vite front end, FastAPI + Pydantic, DuckDB/Polars for joins (SQLite in demo), RapidFuzz + SciPy Hungarian for matching, SHAP, and an LLM copilot. The current prototype is a static browser app with rule-based reconciliation, an in-browser Isolation Forest and Benford check (`ml.js`), and intent matching for the copilot.
 
 ## Next steps, in order
 1. Port `runEngine` to Python (FastAPI `/reconcile`), keep the same issue schema `{type, sup, bills, impact, ...}` so the UI needs no changes; swap `SEED` for a fetch.
 2. Synthetic generator: 300 suppliers, 12 states, ~24,000 bills, Apr 2025 to Mar 2026, 13 planted error types with labels; precision/recall per type + ₹-weighted recall.
-3. Isolation Forest + SHAP reasons for the spike/supplier-risk flags.
+3. (Done in the browser, `ml.js`.) Move the model to scikit-learn and swap the leave-one-feature-out attribution for SHAP.
 4. Real copilot on LangGraph + Groq; verifier rejects any ₹ figure not in engine output.
 5. Rehearse the Chaos Mode demo until it never fails.
 
@@ -67,3 +67,10 @@ The generator plants 13 error types plus "trap" bills (invoice-format variants, 
 
 ## Chaos Mode trap (phase 5)
 "Reformat the invoice number" rewrites the GSTR-2B copy of a clean bill with a different separator or zero padding. The pass is silence: the scoreboard's Ignored counter goes up and the toast says "Still matched. No false flag." Any new issue counts as a false alarm instead. It does not use up the clean bill. `node tools/check-trap.js` runs the trap on every clean bill of the sample and demo month (335 bills, 0 false alarms) and confirms that a one-digit change (AW-0442 vs AW/443) is still treated as a different bill.
+
+## Anomaly model (ml.js)
+- Isolation Forest (100 trees, seeded) over five bill features: size against the supplier's usual bill, weekend date, round-number amount, gap since the supplier's last bill, and how busy the week is for that supplier. It flags at most 2% of bills as "Unusual bill" review items and attaches its score to rule-based spikes. It never changes a rupee figure.
+- Reasons come from leave-one-feature-out attribution (how much the score drops if a feature took a typical value). This is not SHAP; do not call it SHAP.
+- Supplier risk score = findings weighted by type + how unusual the supplier's own bills are + late filing, squashed to 0-99.
+- Benford's first-digit test runs on the whole ledger only, and says "not applicable" when bills span less than 50x from small to large, because it would flag normal data.
+- Measured on the synthetic test set: finds 137 of 137 planted unusual bills while flagging 2.0% of bills (`node tools/eval.js`). `node tools/check-ml.js` guards it on the demo month.

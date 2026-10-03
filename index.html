@@ -402,6 +402,11 @@ table.acc .miss { color:var(--red); font-weight:600; }
 .acc-note { margin:12px 2px 0; color:var(--muted); font-size:13.5px; max-width:90ch; }
 @media (max-width:1020px) { .acc-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 .drop-note { display:block; margin-top:6px; color:var(--faint); font-size:12.5px; }
+.bf-svg { width:100%; height:auto; display:block; margin-top:6px; }
+.bf-svg text { font-family:var(--ui); fill:var(--muted); font-size:12px; }
+.bf-bar { fill:var(--mint); } .bf-exp { stroke:var(--amber); stroke-width:2.5; }
+.bf-key { display:flex; gap:18px; flex-wrap:wrap; color:var(--muted); font-size:13px; margin-top:6px; }
+.bf-key i { display:inline-block; width:12px; height:8px; border-radius:2px; margin-right:6px; vertical-align:0; }
 </style>
 </head>
 <body>
@@ -507,6 +512,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
       <div class="sec-head"><div><h2 id="supTitle">Supplier risk</h2><p>Mismatch history, missing filings and odd bills, rolled into one score. Click a supplier to filter the queue.</p></div></div>
       <div class="table-wrap"><table class="sup"><thead><tr><th>Supplier</th><th>State</th><th>Bills this month</th><th>Open issues</th><th>ITC exposed</th><th>GSTR-1 filing</th><th>Risk score</th></tr></thead><tbody id="supBody"></tbody></table></div>
       <div style="margin-top:12px"><button class="btn small" type="button" id="supMore"></button></div>
+      <div class="card" id="benford" style="margin-top:20px" hidden></div>
     </section>
 
     <section class="section" id="liability" aria-labelledby="liabTitle">
@@ -532,6 +538,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
       <div class="sec-head"><div><h2 id="accTitle">Accuracy</h2><p id="accSub">Measured on our synthetic test set, with the same engine this dashboard runs.</p></div></div>
       <div class="acc-tiles" id="accTiles"></div>
       <div class="table-wrap"><table class="acc"><thead><tr><th>Error type</th><th>Planted</th><th>Caught</th><th>Recall</th><th>Wrongly flagged</th><th>₹ caught of ₹ planted</th></tr></thead><tbody id="accBody"></tbody></table></div>
+      <p class="acc-note" id="accMl"></p>
       <p class="acc-note" id="accNote"></p>
     </section>
 
@@ -574,6 +581,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
 <script src="data/eval.js"></script>
 <script src="data/demo.js"></script>
 <script src="ingest.js"></script>
+<script src="ml.js"></script>
 <script>
 /* =====================================================================
    DATA: the sample (SEED), rate master and engine live in engine.js, shared with the Node tools.
@@ -639,7 +647,19 @@ function cleanBills(issues) {
 function compute() {
   const { issues, ms } = runEngine(S.D);
   S.lastMs = ms;
-  S.all = groupIssues(issues);
+  S.idx = new Map(); for (const g of S.D.g2b) S.idx.set(g.id, g); for (const b of S.D.books) S.idx.set(b.id, b);
+  // Anomaly model: raises review flags only, never a rupee figure. Flags on bills the median rule already caught are attached to that issue.
+  S.ml = Rekora.ml.detect(S.D);
+  const spikeBy = new Map(issues.filter((i) => i.type === 'spike').map((i) => [i.bills[0], i]));
+  const mlIssues = [];
+  for (const f of S.ml.flags) {
+    const sp = spikeBy.get(f.bill);
+    if (sp) { sp.ml = f; continue; }
+    const b = S.D.books.find((x) => x.id === f.bill);
+    const it = { type:'anomaly', sup:f.sup, bills:[f.bill], impact:tax(b), ml:f };
+    it.ims = imsAdvice(it); mlIssues.push(it);
+  }
+  S.all = groupIssues(issues.concat(mlIssues));
   S.groups = S.all.filter((g) => !S.resolved.has(g.key)).sort((a, b) => b.impact - a.impact);
   // This month's totals count issues on bills of the return month, plus 180-day reversals of any age. Older-month issues stay in the queue.
   const inPeriod = (g) => S.D.base || g.type === 'unpaid180' || g.bills.some((id) => { const r = rec(id); return r && r.date.startsWith(periodOf()); });
@@ -669,7 +689,8 @@ function sumBuckets(groups) {
   return o;
 }
 const supName = (k) => S.D.suppliers[k].name;
-const rec = (id) => S.D.books.find((b) => b.id === id) || S.D.g2b.find((g) => g.id === id);
+// Bill lookup by id (books win over GSTR-2B on a clash). Rebuilt on every compute() so chaos edits are seen.
+const rec = (id) => (S.idx ? S.idx.get(id) : null) || S.D.books.find((b) => b.id === id) || S.D.g2b.find((g) => g.id === id);
 
 /* =====================================================================
    Rendering
@@ -682,9 +703,22 @@ function animateNum(el, to, fmt = inr, dur = 900) {
   requestAnimationFrame(step);
 }
 function renderAll() {
-  renderMeta(); renderAccuracy(); renderHero(); renderStatus(); renderQueue(); renderEvidence(); renderSuppliers(); renderLiability(); renderSources(); renderChaos();
+  renderBenford(); renderMeta(); renderAccuracy(); renderHero(); renderStatus(); renderQueue(); renderEvidence(); renderSuppliers(); renderLiability(); renderSources(); renderChaos();
 }
 const TYPE_ORDER = ['missing2b', 'missingBooks', 'amount', 'taxValue', 'gstin', 'rate', 'taxType', 'duplicate', 'unpaid180', 'split', 'combined', 'doublePay', 'spike'];
+function renderBenford() {
+  const el = $('#benford'), b = Rekora.ml.benford(S.D);
+  if (!b) { el.hidden = true; return; }
+  el.hidden = false;
+  if (!b.applicable) { el.innerHTML = `<div class="card-head"><h3>Pattern check: first digits of every bill</h3><span>Benford's law</span></div><p class="acc-note" style="margin:0">Not applicable to this data. Benford's law needs bills spread over several orders of magnitude, and this ledger's bills span only about ${b.spread}× from small to large. Running it anyway would flag perfectly normal data, so Rekora skips it. It runs on larger ledgers.</p>`; return; }
+  const W = 540, H = 150, base = 120, top = 14, bw = 34, gap = (W - 20 - 9 * bw) / 8, mx = Math.max(...b.observed, ...b.expected) * 1.1;
+  const y = (v) => base - v / mx * (base - top);
+  const bars = b.observed.map((o, i) => { const x = 10 + i * (bw + gap); return `<rect class="bf-bar" x="${x}" y="${y(o)}" width="${bw}" height="${base - y(o)}" rx="3"/><line class="bf-exp" x1="${x - 3}" x2="${x + bw + 3}" y1="${y(b.expected[i])}" y2="${y(b.expected[i])}"/><text x="${x + bw / 2}" y="${base + 18}" text-anchor="middle">${i + 1}</text>`; }).join('');
+  el.innerHTML = `<div class="card-head"><h3>Pattern check: first digits of every bill</h3><span>Benford's law, whole ledger, ${b.n.toLocaleString('en-IN')} bills</span></div>
+    <svg class="bf-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="First-digit distribution of taxable values against Benford's law">${bars}</svg>
+    <div class="bf-key"><span><i style="background:var(--mint)"></i>Your bills</span><span><i style="background:var(--amber)"></i>Expected by Benford</span><span><b>Deviation ${b.mad}</b>: ${b.verdict} (Nigrini's bands)</span></div>
+    <p class="acc-note" style="margin-top:8px">Checked across the whole ledger, not per supplier: one supplier's bills are alike by design, so a per-supplier test would flag everyone. A deviation is a prompt to look, not proof of anything.</p>`;
+}
 function renderAccuracy() {
   const sec = $('#accuracy'), ev = window.REKORA_EVAL;
   if (!ev) { sec.hidden = true; return; }
@@ -700,6 +734,8 @@ function renderAccuracy() {
     const m = ev.perType[t];
     return `<tr><td>${TYPES[t].label}</td><td>${n(m.planted)}</td><td>${n(m.detected)}</td><td class="${m.missed ? 'miss' : ''}">${pct(m.recall)}</td><td class="${m.falsePositives ? 'miss' : ''}">${m.falsePositives}</td><td>${inr(m.rupeesCaught)} of ${inr(m.rupeesPlanted)}</td></tr>`;
   }).join('');
+  const m = ev.ml;
+  $('#accMl').textContent = m ? `Anomaly model (${m.model}, no labels used to train): found ${m.spikesFound} of ${m.plantedSpikes} planted unusual bills while flagging ${(m.flaggedShare * 100).toFixed(1)}% of ${m.billsScored.toLocaleString('en-IN')} bills for review, in ${m.ms} ms. Flags are review items, not errors, and they never change a rupee figure.` : '';
   $('#accNote').textContent = `The errors were planted by our own generator, following the rules this engine implements, so this shows the engine is consistent and fast (${n(o.billsPerSecond)} bills a second), not that it will score the same on real books. Real data comes next.`;
 }
 function renderHero() {
@@ -807,6 +843,7 @@ function shortWhy(g) {
     case 'duplicate': return 'Same bill entered twice';
     case 'unpaid180': return `${inr(i.unpaid)} unpaid for ${i.age} days`;
     case 'spike': return `${i.ratio}× this supplier's usual bill`;
+    case 'anomaly': return `Unusual: ${i.ml.reasons[0] || 'differs from the rest of the ledger'}`;
     case 'split': return `Paid in ${i.parts.length} parts, needs your confirmation`;
     case 'combined': return `${g.bills.length} bills paid in one transfer, needs your confirmation`;
     case 'doublePay': return 'Same bill paid twice, cash to recover';
@@ -873,7 +910,8 @@ function explain(g) {
     case 'taxType': return i.inter ? `${s.name} is registered in ${st} (GSTIN starts ${s.gstin.slice(0, 2)}) and the goods came to you in Delhi. That's an inter-state supply, so it should carry IGST of ${inr(tax(r))}, not CGST + SGST. Credit under the wrong head can be disallowed.${r._p && r._p.length ? ' Amounts and payment match, so only the tax type is wrong.' : ''}` : `${s.name} is in Delhi, like you, so this bill should carry CGST + SGST, not IGST of ${inr(tax(r))}.`;
     case 'duplicate': { const t = S.D.books.find((x) => x.id === i.twin); return `${t.inv} and ${r.inv} are the same bill entered twice: same supplier, amount and date. Only one appears in GSTR-2B and the bank. Remove the second entry, or you over-claim ${inr(g.impact)}.`; }
     case 'unpaid180': return `This bill dated ${fdate(r.date)} is unpaid or part-paid after ${i.age} days, with ${inr(i.unpaid)} still outstanding${i.paid ? ` (${inr(i.paid)} was paid)` : ''}. Under the 180-day rule (Section 16(2), Rule 37) credit is reversed in proportion to the unpaid part, here ${inr(g.impact)}, and you can claim it back once you pay. Interest at 18% a year from the date the credit was availed is about ${inr(i.interest)} so far.`;
-    case 'spike': return `This bill's taxable value of ${inr(r.taxable)} is ${i.ratio}× ${s.name}'s usual ${inr(i.med)}.${i.sunday ? ' It\'s dated on a Sunday.' : ''} One-off bills like this are how fake-ITC invoices often look. Hold the payment and check the e-way bill before claiming.`;
+    case 'spike': return `This bill's taxable value of ${inr(r.taxable)} is ${i.ratio}× ${s.name}'s usual ${inr(i.med)}.${i.sunday ? ' It\'s dated on a Sunday.' : ''} One-off bills like this are how fake-ITC invoices often look. Hold the payment and check the e-way bill before claiming.${i.ml ? ` The Isolation Forest model agrees: anomaly score ${i.ml.score.toFixed(2)}.` : ''}`;
+    case 'anomaly': return `The Isolation Forest model scored this bill ${i.ml.score.toFixed(2)} (1.0 is the most unusual) against the whole ledger, the main reasons: ${i.ml.reasons.join('; ') || 'it is unlike the other bills'}. That is not an error by itself, so check the bill with ${s.name} before you claim ${inr(tax(r))} of credit.`;
     case 'split': { const ps = i.parts.map((id) => S.D.bank.find((p) => p.id === id)); return `${s.name}'s bill ${r.inv} (${inr(total(r))}) looks to be paid in ${ps.length} parts: ${ps.map((p) => `${inr(p.amount)} on ${fdate(p.date)}`).join(' and ')}. The parts add up exactly, but bank narrations rarely name the invoice, so Rekora does not decide this alone. Confirm the allocation to close it.`; }
     case 'combined': { const p = S.D.bank.find((x) => x.id === i.pay); return `One payment of ${inr(p.amount)} on ${fdate(p.date)} ("${p.ref}") matches ${g.bills.map((id) => rec(id).inv).join(' + ')} from ${s.name} added together. It looks like a bulk payment. Confirm the allocation so these bills are not wrongly treated as unpaid under the 180-day rule.`; }
     case 'doublePay': { const a = S.D.bank.find((x) => x.id === i.first), b2 = S.D.bank.find((x) => x.id === i.pay); return `${r.inv} (${inr(total(r))}) was paid on ${fdate(a.date)} and again on ${fdate(b2.date)}, both naming the same invoice. The bill and its credit are fine; ${inr(b2.amount)} of cash went out twice. Ask ${s.name} for a refund or an adjustment against the next bill. This is a cash leak, so it is not counted in the credit buckets.`; }
@@ -890,6 +928,7 @@ const ACTIONS = {
   duplicate:[['Remove duplicate', 'fix', 'Duplicate removed from the books.']],
   unpaid180:[['Reverse ITC', 'fix', 'Credit reversed. Re-claim it once you pay.'], ['Mark as paid', 'none', 'Marked as paid. Credit can stay.']],
   spike:[['Hold payment', 'none', 'Payment on hold until delivery is verified.'], ['Mark verified', 'none', 'Verified as genuine.']],
+  anomaly:[['Mark verified', 'none', 'Verified as genuine.'], ['Hold payment', 'none', 'Payment on hold until the bill is verified.']],
   combined:[['Confirm allocation', 'none', 'Payment allocation confirmed.'], ['Not a match', 'none', 'Unlinked. The bills go back to unpaid.']],
   doublePay:[['Ask for refund', 'none', 'Refund request noted. No credit change.'], ['Mark as adjusted', 'none', 'Marked as adjusted against a later bill.']],
   split:[['Confirm match', 'none', 'Split payment confirmed.'], ['Not a match', 'none', 'Unlinked. The bill goes back to unmatched.']],
@@ -900,7 +939,8 @@ function renderEvidence() {
   if (!g) { el.innerHTML = `<div class="ev-empty"><b>Nothing selected</b>Pick an issue from the queue to see books, GSTR-2B and bank side by side.</div>`; return; }
   if (S.billIdx >= g.items.length) S.billIdx = 0;
   const ty = TYPES[g.type], bill = g.items[S.billIdx].bills[0];
-  const score = g.type === 'spike' ? `Risk ${riskScore(g.sup)} / 100` : `${ty.conf}% confident`;
+  const gi = g.items[Math.min(S.billIdx, g.items.length - 1)];
+  const score = g.type === 'anomaly' ? `Anomaly ${gi.ml.score.toFixed(2)}` : g.type === 'spike' ? `Risk ${riskScore(g.sup)} / 100` : `${ty.conf}% confident`;
   const tabs = g.items.length > 1 ? `<div class="billtabs" role="group" aria-label="Bills in this issue">${g.items.map((it, n) => `<button data-bill="${n}" aria-pressed="${n === S.billIdx}">${esc(rec(it.bills[0]).inv)}</button>`).join('')}</div>` : '';
   const words = explain(g), figs = (words.match(/₹[\d,]+/g) || []).length;
   el.innerHTML = `<div class="ev-top"><div><h3>${ty.label}</h3><p>${esc(supName(g.sup))}, ${inr(g.impact)} ${bucketOf(g) === 'recover' ? 'to review' : bucketOf(g) === 'confirm' ? 'to confirm' : bucketOf(g) === 'leak' ? 'cash to recover' : 'at stake'}</p></div><span class="conf">${score}</span></div>
@@ -910,10 +950,13 @@ function renderEvidence() {
     <div class="ev-actions">${ACTIONS[g.type].map(([label, act], n) => `<button class="btn small ${n === 0 ? 'primary' : ''}" data-act="${act}" data-n="${n}">${label}</button>`).join('')}</div>`;
 }
 function riskScore(k) {
-  const w = { spike:35, missing2b:15, taxType:20, rate:20, gstin:15, amount:15, duplicate:10, unpaid180:20, taxValue:10, missingBooks:0, split:0, combined:0, doublePay:10 };
-  let s = S.D.suppliers[k].base;
+  const w = { spike:35, missing2b:15, taxType:20, rate:20, gstin:15, amount:15, duplicate:10, unpaid180:20, taxValue:10, missingBooks:0, split:0, combined:0, doublePay:10, anomaly:8 };
+  // Data-driven base: how unusual the supplier's own bills are (Isolation Forest, mean of their top three scores) plus late filing. The built-in sample has too few bills for the model, so it keeps its fixed base.
+  const ms = S.ml && S.ml.supplierScore && S.ml.supplierScore[k];
+  let s = ms !== undefined ? Math.max(0, Math.min(40, Math.round((ms - 0.4) * 100))) + (S.D.suppliers[k].late ? 10 : 0) : S.D.suppliers[k].base;
   S.groups.filter((g) => g.sup === k).forEach((g) => s += w[g.type] * (g.type === 'missing2b' ? Math.min(3, g.bills.length) : 1));
-  return Math.min(99, s);
+  // Squash so a few findings do not push every supplier to the ceiling.
+  return Math.min(99, Math.round(100 * (1 - Math.exp(-s / 55))));
 }
 function renderSuppliers() {
   const rows = Object.keys(S.D.suppliers).map((k) => {

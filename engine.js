@@ -189,6 +189,7 @@ const TYPES = {
   split:{ label:'Split payment', bucket:'confirm', conf:92, needsReview:true },
   combined:{ label:'Combined payment', bucket:'confirm', conf:90, needsReview:true },
   doublePay:{ label:'Paid twice', bucket:'leak', conf:95 },
+  anomaly:{ label:'Unusual bill', bucket:'review', conf:null, method:'Isolation Forest' },
 };
 const bucketOf = (i) => i.bucket || TYPES[i.type].bucket;
 
@@ -206,6 +207,7 @@ function imsAdvice(i) {
     case 'unpaid180': return { act:'Accept', why:'The bill is genuine. Reverse the credit in GSTR-3B and re-claim it when you pay.' };
     case 'spike': return { act:'Pending', why:'Keep it pending until delivery and the e-way bill are verified.' };
     case 'split': case 'combined': return { act:'Accept', why:'Accept once you confirm the payment allocation.' };
+    case 'anomaly': return { act:'Pending', why:'Keep it pending until you have checked the bill with the supplier. It is unusual, not necessarily wrong.' };
     case 'doublePay': return { act:'Accept', why:'The bill is fine. Recover the second payment from the supplier.' };
   }
   return { act:'Pending', why:'' };
