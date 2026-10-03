@@ -68,8 +68,37 @@
   const upper = (s) => String(s || '').trim().toUpperCase();
   const nameKey = (s) => upper(s).replace(/\b(PVT|PRIVATE|LTD|LIMITED|LLP|M\/S)\b/g, '').replace(/[^A-Z0-9]/g, '');
 
+  /* GSTR-2B as downloaded from the GST portal (JSON). Reads b2b invoices; credit/debit notes and other sections are counted and left out. */
+  function ingestPortalJson(name, text) {
+    let j; try { j = JSON.parse(text); } catch (e) { throw new Error(`${name}: not valid JSON (${e.message})`); }
+    const doc = (j && j.data && j.data.docdata) || (j && j.docdata) || j || {};
+    const b2b = Array.isArray(doc.b2b) ? doc.b2b : null;
+    if (!b2b) throw new Error(`${name}: no b2b section found. Expected the GSTR-2B JSON from the GST portal (data → docdata → b2b).`);
+    const rows = [], errors = [], notes = [];
+    b2b.forEach((sup, si) => {
+      const gstin = upper(sup.ctin), supplier = sup.trdnm || sup.tradeName || '';
+      (sup.inv || []).forEach((inv, ii) => {
+        const where = `${name} supplier ${si + 1} invoice ${ii + 1}`, bad = (m) => errors.push(`${where}: ${m}`);
+        if (!gstin) return bad('supplier GSTIN (ctin) missing');
+        if (!inv.inum) return bad('invoice number (inum) missing');
+        const date = parseDate(inv.dt || inv.idt || ''); if (!date) return bad(`date "${inv.dt || inv.idt || ''}" not understood`);
+        const items = (inv.items || (inv.itms || []).map((x) => x.itm_det || x)).filter(Boolean);
+        if (!items.length) return bad('no items');
+        const sum = (k) => items.reduce((a, it) => a + (Number(it[k]) || 0), 0);
+        const rec = { id:null, supplier, gstin, inv:String(inv.inum), date, taxable:Math.round(sum('txval')), cgst:Math.round(sum('cgst')), sgst:Math.round(sum('sgst')), igst:Math.round(sum('igst')) };
+        if ([rec.taxable, rec.cgst, rec.sgst, rec.igst].some((x) => !Number.isFinite(x))) return bad('a value is not a number');
+        rows.push(rec);
+      });
+    });
+    const skipped = ['cdnr', 'cdnra', 'b2ba', 'isd', 'impg'].filter((k) => Array.isArray(doc[k]) && doc[k].length);
+    if (skipped.length) notes.push(`${name}: ${skipped.join(', ')} sections are not read yet.`);
+    if (!rows.length) throw new Error(`${name}: the b2b section has no invoices`);
+    return { kind:'g2b', rows, errors, notes, name };
+  }
+
   /* One file → typed rows plus row-level problems. Never throws on bad rows; throws only if the file is unusable. */
   function ingestFile(name, text) {
+    if (/\.json$/i.test(name) || /^\s*[{\[]/.test(text)) return ingestPortalJson(name, text);
     const rows = parseCsv(text);
     if (rows.length < 2) throw new Error(`${name}: no data rows`);
     const map = columnMap(rows[0]), kind = classify(map);
@@ -153,6 +182,6 @@
     return D;
   }
 
-  const api = { parseCsv, columnMap, classify, parseDate, parseNum, ingestFile, buildDataset, withPeriod };
+  const api = { ingestPortalJson, parseCsv, columnMap, classify, parseDate, parseNum, ingestFile, buildDataset, withPeriod };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Ingest = api;
 })(typeof window !== 'undefined' ? window : globalThis);

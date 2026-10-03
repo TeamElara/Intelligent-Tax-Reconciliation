@@ -225,6 +225,10 @@ function writeSet(dir, data, jsName) {
   const { D, labels, traps, sales } = data, sn = (k) => D.suppliers[k].name;
   fs.writeFileSync(path.join(dir, 'books.csv'), csv(D.books.map((r) => Object.assign({}, r, { supplier:sn(r.sup) })), ['id','supplier','gstin','inv','date','hsn','taxable','rate','cgst','sgst','igst']));
   fs.writeFileSync(path.join(dir, 'g2b.csv'), csv(D.g2b.map((r) => Object.assign({}, r, { supplier:sn(r.sup) })), ['id','supplier','gstin','inv','date','taxable','cgst','sgst','igst']));
+  // The same GSTR-2B rows in the shape of the GST portal's JSON download, so the demo can show a real portal file being dropped in.
+  const bySupplier = new Map(); for (const r of D.g2b) { if (!bySupplier.has(r.gstin)) bySupplier.set(r.gstin, { ctin:r.gstin, trdnm:sn(r.sup), inv:[] }); const t = r.cgst + r.sgst + r.igst, [y, m, d] = r.date.split('-');
+    bySupplier.get(r.gstin).inv.push({ inum:r.inv, typ:'R', dt:`${d}-${m}-${y}`, val:r.taxable + t, pos:E.BUYER.state, rev:'N', itcavl:'Y', diffprcnt:1, items:[{ num:1, rt:Math.round(t / Math.max(1, r.taxable) * 100), txval:r.taxable, igst:r.igst, cgst:r.cgst, sgst:r.sgst, cess:0 }] }); }
+  if (jsName) fs.writeFileSync(path.join(dir, 'gstr2b.json'), JSON.stringify({ data:{ gstin:E.BUYER.gstin, rtnprd:D.asOf.slice(5, 7) + D.asOf.slice(0, 4), version:'1.0', gentime:D.asOf, docdata:{ b2b:[...bySupplier.values()] } } }, null, 1));
   fs.writeFileSync(path.join(dir, 'bank.csv'), csv(D.bank, ['id','date','amount','ref']));
   fs.writeFileSync(path.join(dir, 'sales.csv'), csv(sales, ['month','taxable','igst','cgst','sgst']));
   fs.writeFileSync(path.join(dir, 'suppliers.csv'), csv(Object.entries(D.suppliers).map(([k, s]) => Object.assign({ key:k }, s, { hist:s.hist.join(';') })), ['key','name','gstin','base','filing','hist']));

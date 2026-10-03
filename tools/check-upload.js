@@ -23,6 +23,19 @@ if (onlyA.length || onlyB.length) { fail++; console.error('only in bundled:', on
 console.log('as of', up.D.asOf, '| period', up.D.period, '| buyer state', up.D.buyer.state, '| output tax', JSON.stringify(up.D.output), '| notes', JSON.stringify(up.notes));
 if (up.D.asOf !== ref.D.asOf) { fail++; console.error('asOf differs', up.D.asOf, ref.D.asOf); }
 
+// The portal-style JSON must give exactly the same GSTR-2B rows, hence the same issues, as the CSV.
+const json = I.ingestFile('gstr2b.json', fs.readFileSync(path.join(dir, 'gstr2b.json'), 'utf8'));
+if (json.kind !== 'g2b' || json.errors.length) { fail++; console.error('FAIL json ingest', json.kind, json.errors.slice(0, 3)); }
+const viaJson = I.buildDataset(Object.assign({}, files, { g2b:json.rows })); I.withPeriod(viaJson.D, viaJson.sales);
+// Portal files have no row ids, so compare what each issue is and is worth, not which generated id it carries.
+const content = (D) => E.runEngine(D).issues.map((i) => `${i.type}|${i.impact}|${i.bucket || ''}|${i.bills.length}`).sort();
+const c = content(viaJson.D), cc = content(up.D), onlyJ = c.filter((x, k) => x !== cc[k]), onlyC = cc.filter((x, k) => x !== c[k]);
+console.log(`portal JSON: ${json.rows.length} invoices, ${c.length} issues (CSV gave ${b.length})`);
+if (onlyJ.length || onlyC.length) { fail++; console.error('JSON vs CSV differ:', onlyJ.slice(0, 4), onlyC.slice(0, 4)); }
+for (const bad of ['{"data":{}}', '{nope', '{"data":{"docdata":{"b2b":[]}}}']) { try { I.ingestFile('x.json', bad); fail++; console.error('FAIL accepted bad JSON', bad); } catch (e) { /* expected */ } }
+const part = I.ingestFile('p.json', JSON.stringify({ data:{ docdata:{ b2b:[{ ctin:'07AAAAA0000A1Z5', trdnm:'T', inv:[{ inum:'A-1', dt:'05-09-2026', items:[{ txval:1000, cgst:90, sgst:90 }] }, { dt:'05-09-2026', items:[{ txval:1 }] }, { inum:'A-3', dt:'31-02-2026', items:[{ txval:1 }] }] }], cdnr:[{ ctin:'x', nt:[] }, { x:1 }] } } }));
+if (part.rows.length !== 1 || part.errors.length !== 2 || !part.notes.length) { fail++; console.error('FAIL partial JSON', part.rows.length, part.errors, part.notes); } else console.log('partial JSON: 1 invoice kept, 2 rejected, credit notes noted');
+
 // Messy input must produce row errors, not exceptions.
 const messy = 'Invoice No.,Invoice Date,Party Name,GSTIN of Supplier,HSN Code,Taxable Value,Rate,CGST Amount,SGST Amount,IGST Amount\n' +
   'A-1,05/09/2026,Gupta Steel,06AADFG7781Q1ZO,7214,"1,00,000",18,9000,9000,0\n' +

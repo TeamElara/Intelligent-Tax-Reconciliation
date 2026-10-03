@@ -63,7 +63,7 @@ The generator plants 13 error types plus "trap" bills (invoice-format variants, 
 - `ingest.js` parses CSVs in the browser (no server). Column names are matched loosely ("Invoice No.", "Taxable Value", "Narration"...); the file type is detected from its headers. Bad rows are skipped and reported; an unusable file leaves the current data untouched. `node tools/check-upload.js` proves the four demo CSVs give exactly the same issues as the bundled `data/demo.js`.
 - The dashboard boots on the bundled demo month (`data/demo.js`). `?demo=seed` shows the older built-in sample, whose headline totals are scaled by `BASE`. "Load demo month" (Sources) restores the demo; Reset returns to whatever was last loaded.
 - Totals are derived from the data: ITC in books = tax on bills dated in the return month; output tax = that month's row in the sales file; buckets count issues on that month's bills plus 180-day reversals of any age. Older-month issues stay in the queue with a note.
-- Known limits: the return month is the latest month in the files; the buyer's state is inferred from CGST+SGST bills; GSTR-2B is read from CSV, not the portal JSON yet; no sales register means output tax is 0.
+- Known limits: the return month is the latest month in the files; the buyer's state is inferred from CGST+SGST bills; GSTR-2B can be CSV or the GST portal JSON (b2b invoices only; credit/debit notes and other sections are noted and skipped); no sales register means output tax is 0.
 
 ## Chaos Mode trap (phase 5)
 "Reformat the invoice number" rewrites the GSTR-2B copy of a clean bill with a different separator or zero padding. The pass is silence: the scoreboard's Ignored counter goes up and the toast says "Still matched. No false flag." Any new issue counts as a false alarm instead. It does not use up the clean bill. `node tools/check-trap.js` runs the trap on every clean bill of the sample and demo month (335 bills, 0 false alarms) and confirms that a one-digit change (AW-0442 vs AW/443) is still treated as a different bill.
@@ -77,3 +77,6 @@ The generator plants 13 error types plus "trap" bills (invoice-format variants, 
 
 ## Decision log and exports
 Every action on an issue is recorded: time, issue, supplier and invoices, ₹ at stake, the decision, its effect on the claim, IMS advice, and the evidence text the engine gave at that moment. Undo removes the entry. "Export decision log (CSV)" and "Export queue (CSV)" download Excel-ready files (UTF-8 BOM; cells starting with = + - @ are prefixed so a supplier name cannot run as a formula). The log lives in the page only: it is cleared by Reset and when new files are loaded.
+
+## GSTR-2B portal JSON
+`ingestPortalJson` in `ingest.js` reads the portal download (`data.docdata.b2b[].inv[].items[]`, with `dt` or `idt` dates), summing each invoice's items. `data/demo/gstr2b.json` is the demo month's GSTR-2B in that shape; `node tools/check-upload.js` proves it gives the same issues as the CSV. The format was written from the portal's published structure; test it against a real download before relying on it.

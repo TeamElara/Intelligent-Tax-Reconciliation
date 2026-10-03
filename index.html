@@ -1035,7 +1035,7 @@ function renderSources() {
     ? [['books', 'Purchase register', S.counts.total, 'Tally export, 29 Sep'], ['g2b', 'GSTR-2B and IMS', 2072, 'Portal JSON, draft view'], ['bank', 'Bank statement', 1986, 'HDFC current account CSV'], ['sales', 'Sales register', 1240, 'Feeds output tax']]
     : [['books', 'Purchase register', S.D.books.length, S.baseSet.label], ['g2b', 'GSTR-2B and IMS', S.D.g2b.length, S.baseSet.label], ['bank', 'Bank statement', S.D.bank.length, S.baseSet.label], ['sales', 'Sales register', (S.D.sales || []).length, S.D.output ? 'Output tax for ' + periodOf() : 'No row for ' + periodOf()]];
   $('#srcGrid').innerHTML = src.map(([ic, nm, c, sub]) => `<div class="src">${icons[ic]}<b>${nm}</b><strong class="num">${n(c)}</strong><span>${esc(sub)}</span><span class="ok">Imported</span></div>`).join('') +
-    `<label class="drop" id="drop"><input type="file" multiple accept=".csv,text/csv" hidden id="fileIn"><b>Drop CSV files here, or click</b>Purchase register, GSTR-2B, bank statement and sales register. They are read in your browser and never uploaded.${S.srcNote ? '<span class="drop-note">' + esc(S.srcNote) + '</span>' : ''}</label>`;
+    `<label class="drop" id="drop"><input type="file" multiple accept=".csv,.json,text/csv,application/json" hidden id="fileIn"><b>Drop files here, or click</b>Purchase register, bank statement and sales register as CSV; GSTR-2B as CSV or the portal JSON. They are read in your browser and never uploaded.${S.srcNote ? '<span class="drop-note">' + esc(S.srcNote) + '</span>' : ''}</label>`;
 }
 
 function resolve(g, act, msg, label) {
@@ -1290,13 +1290,13 @@ function breakIt() {
    ===================================================================== */
 function load(set) { reset(set); compute(); renderAll(); }
 async function handleFiles(files) {
-  const csvs = files.filter((f) => /\.csv$/i.test(f.name) || f.type === 'text/csv');
-  if (!csvs.length) return toast('<b>Only CSV files for now.</b> Export the register, GSTR-2B and bank statement as CSV.');
-  const errors = [], got = [], staged = Object.assign({}, S.up);
+  const csvs = files.filter((f) => /\.(csv|json)$/i.test(f.name) || f.type === 'text/csv' || f.type === 'application/json');
+  if (!csvs.length) return toast('<b>CSV or GSTR-2B JSON only.</b> Export the register and bank statement as CSV; GSTR-2B can be the portal JSON.');
+  const errors = [], got = [], fileNotes = [], staged = Object.assign({}, S.up);
   for (const f of csvs) {
     try {
       const r = Ingest.ingestFile(f.name, await f.text());
-      staged[r.kind] = r; got.push(`${r.kind === 'g2b' ? 'GSTR-2B' : r.kind === 'books' ? 'books' : r.kind} (${r.rows.length})`); errors.push(...r.errors);
+      staged[r.kind] = r; got.push(`${r.kind === 'g2b' ? 'GSTR-2B' : r.kind === 'books' ? 'books' : r.kind} (${r.rows.length})`); errors.push(...r.errors); fileNotes.push(...(r.notes || []));
     } catch (e) { toast(`<b>Could not read ${esc(f.name)}.</b> ${esc(e.message.replace(f.name + ': ', ''))}`); }
   }
   if (!got.length) return;
@@ -1306,7 +1306,7 @@ async function handleFiles(files) {
   try {
     const built = Ingest.buildDataset({ books:staged.books.rows, g2b:staged.g2b.rows, bank:staged.bank ? staged.bank.rows : [], sales:staged.sales ? staged.sales.rows : [] });
     Ingest.withPeriod(built.D, built.sales);
-    S.srcNote = [errors.length ? `${errors.length} row${errors.length > 1 ? 's' : ''} skipped: ${errors[0]}` : '', ...built.notes].filter(Boolean).join(' ');
+    S.srcNote = [errors.length ? `${errors.length} row${errors.length > 1 ? 's' : ''} skipped: ${errors[0]}` : '', ...fileNotes, ...built.notes].filter(Boolean).join(' ');
     load({ D:built.D, label:'Uploaded files' });
     toast(`<b>Reconciled ${built.D.books.length.toLocaleString('en-IN')} books against ${built.D.g2b.length.toLocaleString('en-IN')} GSTR-2B rows.</b> ${S.groups.length} open issues.${errors.length ? ` ${errors.length} bad row${errors.length > 1 ? 's' : ''} skipped.` : ''}`);
     if (errors.length) console.warn('Skipped rows:\n' + errors.join('\n'));
