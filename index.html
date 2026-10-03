@@ -310,11 +310,11 @@ table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display);
 .ask-form svg { width:18px; height:18px; stroke:var(--on-mint); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .typing { display:inline-flex; gap:4px; } .typing i { width:6px; height:6px; border-radius:50%; background:var(--muted); animation:pulse 1s infinite; } .typing i:nth-child(2) { animation-delay:.15s; } .typing i:nth-child(3) { animation-delay:.3s; }
 
-.score { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:18px; }
+.score { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; }
 .score div { border-radius:12px; border:1px solid var(--line); padding:10px 12px; background:var(--surface-2); }
 .score span { display:block; color:var(--muted); font-size:12.5px; }
 .score strong { font-size:28px; font-weight:700; line-height:1.1; }
-.score .c strong { color:var(--mint); } .score .m strong { color:var(--red); }
+.score .c strong { color:var(--mint); } .score .m strong { color:var(--red); } .score .i strong { color:var(--plum); }
 .step-title { font-weight:700; font-size:14.5px; margin:16px 0 8px; }
 .picks { display:grid; gap:7px; }
 .pick { display:grid; grid-template-columns:18px 1fr auto; gap:10px; align-items:center; border:1px solid var(--line); border-radius:11px; padding:10px 12px; cursor:pointer; font-size:14px; }
@@ -549,7 +549,7 @@ table.acc .miss { color:var(--red); font-weight:600; }
 <aside class="drawer" id="chaos" aria-labelledby="chaosTitle" role="dialog" aria-modal="true">
   <div class="dr-head"><div><h2 id="chaosTitle">Chaos Mode</h2><p>Break any clean bill on purpose. Rekora re-checks everything and should catch it.</p></div><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="dr-body">
-    <div class="score"><div><span>Planted</span><strong class="num" id="cPlanted">0</strong></div><div class="c"><span>Caught</span><strong class="num" id="cCaught">0</strong></div><div class="m"><span>Missed</span><strong class="num" id="cMissed">0</strong></div></div>
+    <div class="score"><div><span>Planted</span><strong class="num" id="cPlanted">0</strong></div><div class="c"><span>Caught</span><strong class="num" id="cCaught">0</strong></div><div class="m"><span>Missed</span><strong class="num" id="cMissed">0</strong></div><div class="i"><span>Ignored</span><strong class="num" id="cIgnored">0</strong></div></div>
     <div class="step-title">1. Pick a clean bill</div><div class="picks" id="billPicks"></div>
     <div class="step-title">2. Choose how to break it</div><div class="picks" id="breakPicks"></div>
     <div class="delta" id="deltaRow"><label for="deltaIn">Change GSTR-2B taxable value by ₹</label><input id="deltaIn" type="number" value="15000" step="100"></div>
@@ -599,7 +599,7 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const S = {
   D:null, baseSet:null, groups:[], all:[], initialOpen:null, resolved:new Map(), booksDelta:0, resolvedCount:0,
   filter:'all', query:'', sel:null, billIdx:0, counts:null, lastMs:0, prevWf:null, clean:null, up:{}, srcNote:'',
-  chaos:{ planted:0, caught:0, missed:0, log:[], broken:new Set() }, newKeys:new Set(), undo:null,
+  chaos:{ planted:0, caught:0, missed:0, traps:0, ignored:0, falseAlarms:0, log:[], broken:new Set() }, newKeys:new Set(), undo:null,
 };
 // Datasets. The bundled demo month is the default; ?demo=seed forces the small built-in sample (whose headline totals are scaled by BASE).
 function seedSet() { return { D:Object.assign(structuredClone(SEED), { base:BASE }), label:'Built-in sample' }; }
@@ -608,7 +608,7 @@ function defaultSet() { return window.REKORA_DEMO && !/demo=seed/.test(location.
 function reset(set) {
   S.baseSet = set || S.baseSet || defaultSet();
   S.D = structuredClone(S.baseSet.D); S.resolved = new Map(); S.booksDelta = 0; S.resolvedCount = 0;
-  S.counts = Object.assign({}, BASE_COUNTS); S.chaos = { planted:0, caught:0, missed:0, log:[], broken:new Set() }; S.newKeys = new Set();
+  S.counts = Object.assign({}, BASE_COUNTS); S.chaos = { planted:0, caught:0, missed:0, traps:0, ignored:0, falseAlarms:0, log:[], broken:new Set() }; S.newKeys = new Set();
   S.initialOpen = null; S.sel = null; S.clean = null; S.prevWf = null;
 }
 const buyer = () => S.D.buyer || BUYER;
@@ -1091,10 +1091,12 @@ const BREAKS = [
   ['taxtype', 'Swap the tax type', 'IGST and CGST + SGST switched'],
   ['remove', 'Delete it from GSTR-2B', 'Supplier never reported it'],
   ['dup', 'Enter it twice in your books', 'Same bill, new separator'],
+  ['reformat', 'Reformat the invoice number', 'Trap: same bill, written differently. Should NOT be flagged'],
 ];
+const TRAP_BREAKS = new Set(['reformat']);
 function renderChaos() {
   const c = S.chaos;
-  $('#cPlanted').textContent = c.planted; $('#cCaught').textContent = c.caught; $('#cMissed').textContent = c.missed;
+  $('#cPlanted').textContent = c.planted; $('#cCaught').textContent = c.caught; $('#cMissed').textContent = c.missed; $('#cIgnored').textContent = `${c.ignored || 0}/${c.traps || 0}`;
   const chosen = ($('input[name=bill]:checked') || {}).value, how = ($('input[name=brk]:checked') || {}).value || 'amount';
   $('#billPicks').innerHTML = (S.clean || []).map((id, n) => {
     const b = S.D.books.find((x) => x.id === id) || (S.baseSet.D.books.find((x) => x.id === id)), done = c.broken.has(id);
@@ -1105,8 +1107,9 @@ function renderChaos() {
   $('#deltaRow').style.display = how === 'amount' ? 'flex' : 'none';
   $('#chaosLog').innerHTML = c.log.slice().reverse().map((l) => `<div>${l}</div>`).join('');
   $('#breakBtn').disabled = !(S.clean || []).length || S.clean.every((id) => c.broken.has(id));
-  const chip = $('#chaosChip'); chip.classList.toggle('on', c.planted > 0);
-  $('#chaosChipText').textContent = `Chaos: ${c.caught} of ${c.planted} caught`;
+  $('#breakBtn').lastChild.textContent = TRAP_BREAKS.has(how) ? 'Reformat it' : 'Break it';
+  const chip = $('#chaosChip'); chip.classList.toggle('on', c.planted + (c.traps || 0) > 0);
+  $('#chaosChipText').textContent = `Chaos: ${c.caught} of ${c.planted} caught` + (c.traps ? `, ${c.ignored} of ${c.traps} ignored${c.falseAlarms ? ', ' + c.falseAlarms + ' false alarm' + (c.falseAlarms > 1 ? 's' : '') : ''}` : '');
 }
 function breakIt() {
   const id = ($('input[name=bill]:checked') || {}).value, how = ($('input[name=brk]:checked') || {}).value;
@@ -1116,14 +1119,16 @@ function breakIt() {
   const label = BREAKS.find((x) => x[0] === how)[1];
   const split = (r, tx) => { if (r.igst) r.igst = tx; else { r.cgst = Math.round(tx / 2); r.sgst = tx - r.cgst; } };
   let targets = [id], bucketMove = 'diff';
+  const trap = TRAP_BREAKS.has(how), openBefore = S.groups.length;
+  if (how === 'reformat') { const n = g && reformatInv(g.inv, b.inv); if (!n) return toast('<b>Could not reformat that invoice number.</b> Pick another bill.'); g.inv = n; }
   if (how === 'amount') { const d = +$('#deltaIn').value || 0; g.taxable += d; split(g, Math.round(g.taxable * b.rate / 100)); }
   if (how === 'gstin') { const s = D.suppliers[b.sup].gstin; b.gstin = s.slice(0, 5) + CS[(CS.indexOf(s[5]) + 1) % 36] + s.slice(6); }
   if (how === 'rate28') { const old = tax(b); b.rate = 28; split(b, Math.round(b.taxable * .28)); if (g) { split(g, Math.round(g.taxable * .28)); } if (D.base) S.booksDelta += tax(b) - old; }
   if (how === 'taxtype') { for (const r of [b, g]) { if (!r) continue; const tx = tax(r); if (r.igst) { r.igst = 0; r.cgst = Math.round(tx / 2); r.sgst = tx - r.cgst; } else { r.igst = tx; r.cgst = 0; r.sgst = 0; } } }
   if (how === 'remove') { D.g2b = D.g2b.filter((x) => x !== g); bucketMove = 'unmatched'; }
   if (how === 'dup') { const c = Object.assign({}, b, { id:id + 'D', inv:b.inv.includes('-') ? b.inv.replace('-', '/') : b.inv.replace('/', '-') }); D.books.push(c); targets.push(c.id); if (D.base) S.booksDelta += tax(c); bucketMove = 'dup'; if (D.base) S.counts.total++; }
-  if (D.base) { if (how !== 'dup') S.counts.matched--; S.counts[bucketMove]++; }
-  S.chaos.broken.add(id); S.chaos.planted++;
+  if (D.base && !trap) { if (how !== 'dup') S.counts.matched--; S.counts[bucketMove]++; }
+  if (trap) S.chaos.traps++; else { S.chaos.broken.add(id); S.chaos.planted++; }
   closeLayers(true);
   document.getElementById('queue').scrollIntoView({ behavior:reduced ? 'auto' : 'smooth' });
   S.filter = 'all'; S.query = ''; $('#search').value = '';
@@ -1133,7 +1138,19 @@ function breakIt() {
     compute();
     const sup = supName(b.sup);
     S.newKeys = new Set(S.groups.filter((gr) => gr.items.some((it) => fresh.includes(it) || fresh.some((f) => f.type === it.type && f.bills.join() === it.bills.join()))).map((gr) => gr.key));
-    if (fresh.length) {
+    if (trap) {
+      // A correct bill written differently. Staying quiet is the pass; any new issue is a false alarm.
+      if (fresh.length) {
+        S.chaos.falseAlarms++;
+        const names = [...new Set(fresh.map((f) => TYPES[f.type].label))].join(', ');
+        S.chaos.log.push(`<b class="m">False alarm</b> ${esc(label.toLowerCase())} on ${esc(sup)}: flagged ${esc(names)}`);
+        toast(`<b>False alarm.</b> ${esc(names)} on ${esc(sup)} after only a reformat.`);
+      } else {
+        S.chaos.ignored++;
+        S.chaos.log.push(`<b class="c">Ignored</b> ${esc(label.toLowerCase())} on ${esc(sup)} (${esc(b.inv)} vs ${esc(g.inv)}): still matched, no flag`);
+        toast(`<b>Still matched. No false flag.</b> ${esc(b.inv)} and ${esc(g.inv)} are the same bill; ${S.groups.length} open issues, ${S.groups.length === openBefore ? 'unchanged' : 'was ' + openBefore}.`);
+      }
+    } else if (fresh.length) {
       S.chaos.caught++;
       const top = S.groups.find((gr) => S.newKeys.has(gr.key));
       if (top) { S.sel = top.key; S.billIdx = Math.max(0, top.items.findIndex((it) => it.bills.some((x) => targets.includes(x)))); }

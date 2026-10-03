@@ -126,6 +126,16 @@ function gstinValid(g) {
 const canon = (inv) => inv.toUpperCase().split(/[^A-Z0-9]+/).map((x) => x.replace(/^([A-Z]*)0+(?=\d)/, '$1')).join('');
 // Digits only, leading zeros dropped. Letters may differ between sources, digits may not (AW-0442 never matches AW-0443).
 const digitsOf = (s) => (String(s).match(/\d+/g) || []).map((x) => String(+x)).join('-');
+// Same invoice, written differently: another separator, zero padding added or dropped. Used by Chaos Mode's trap break.
+// `avoid` is the other source's spelling, so the two copies visibly differ. Null if no different spelling exists.
+function reformatInv(inv, avoid) {
+  inv = String(inv);
+  const m = inv.match(/^(.*?)([-/]?)(\d+)$/);
+  if (!m) return null;
+  const [, pre, sep, num] = m, plain = String(+num), padded = plain.padStart(4, '0'), pfx = pre.replace(/[-/]+$/, '');
+  const tries = [pfx + (sep === '-' ? '/' : '-') + plain, pfx + '/' + padded, pfx + '-' + padded, pfx + padded, pfx + '/' + plain, pfx + '-' + plain];
+  return tries.find((c) => c !== inv && c !== avoid && canon(c) === canon(inv)) || null;
+}
 const hamming = (a, b) => a.length !== b.length ? 99 : [...a].filter((c, i) => c !== b[i]).length;
 const median = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
 function rateOn(hsn, date) { const m = HSN[hsn]; if (!m) return null; let r = null; for (const [from, rate] of m.h) if (date >= from) r = rate; return r; }
@@ -336,5 +346,5 @@ function groupIssues(issues) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { BUYER, AS_OF, STATES, HSN, GST2_DATE, SCRAPPED, INTEREST_PA, SEED, CS, days, tax, total, gstinCheck, gstinValid, canon, digitsOf, hamming, median, rateOn, fy, itcLapse, availedOn, refersTo, payeeOf, TYPES, bucketOf, imsAdvice, runEngine, groupIssues };
+  module.exports = { BUYER, AS_OF, STATES, HSN, GST2_DATE, SCRAPPED, INTEREST_PA, SEED, CS, days, tax, total, gstinCheck, gstinValid, canon, reformatInv, digitsOf, hamming, median, rateOn, fy, itcLapse, availedOn, refersTo, payeeOf, TYPES, bucketOf, imsAdvice, runEngine, groupIssues };
 }

@@ -64,3 +64,6 @@ The generator plants 13 error types plus "trap" bills (invoice-format variants, 
 - The dashboard boots on the bundled demo month (`data/demo.js`). `?demo=seed` shows the older built-in sample, whose headline totals are scaled by `BASE`. "Load demo month" (Sources) restores the demo; Reset returns to whatever was last loaded.
 - Totals are derived from the data: ITC in books = tax on bills dated in the return month; output tax = that month's row in the sales file; buckets count issues on that month's bills plus 180-day reversals of any age. Older-month issues stay in the queue with a note.
 - Known limits: the return month is the latest month in the files; the buyer's state is inferred from CGST+SGST bills; GSTR-2B is read from CSV, not the portal JSON yet; no sales register means output tax is 0.
+
+## Chaos Mode trap (phase 5)
+"Reformat the invoice number" rewrites the GSTR-2B copy of a clean bill with a different separator or zero padding. The pass is silence: the scoreboard's Ignored counter goes up and the toast says "Still matched. No false flag." Any new issue counts as a false alarm instead. It does not use up the clean bill. `node tools/check-trap.js` runs the trap on every clean bill of the sample and demo month (335 bills, 0 false alarms) and confirms that a one-digit change (AW-0442 vs AW/443) is still treated as a different bill.
