@@ -6,6 +6,8 @@ Team Elara (Arihant Jain, Mahatva Goel) · Fintechstico'26 · Problem Statement 
 
 Rules compute. ML flags. A human decides.
 
+**Live demo: [rekora-sand.vercel.app](https://rekora-sand.vercel.app)** (add `?mode=full` to open every step at once)
+
 ## What it does
 
 An accountant gets three records that never agree: the purchase register, the GSTR-2B the portal generates from suppliers' filings, and the bank statement. Rekora reconciles all three and turns the differences into a list ranked by rupees:
@@ -20,7 +22,7 @@ Pick any issue to see books, GSTR-2B and bank side by side, the reason in plain 
 
 ## Try it
 
-No install, no build step.
+Open the live demo at [rekora-sand.vercel.app](https://rekora-sand.vercel.app), or run it locally. No install, no build step.
 
 ```bash
 node tools/serve.js 8765     # then open http://localhost:8765
