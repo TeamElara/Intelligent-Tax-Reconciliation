@@ -14,9 +14,14 @@ const HSN = {
   '7318':{ d:'Screws, bolts and nuts', h:[['2017-07-01',18]] },
   '7408':{ d:'Copper wire', h:[['2017-07-01',18]] },
   '3923':{ d:'Plastic packing articles', h:[['2017-07-01',18]] },
+  // Slab-change goods: the right rate depends on the bill date (GST 2.0, 22 Sep 2025).
+  '8516':{ d:'Electric heaters and geysers', h:[['2017-07-01',28], ['2025-09-22',18]] },
+  '4818':{ d:'Tissue and paper articles', h:[['2017-07-01',12], ['2025-09-22',5]] },
 };
 const GST2_DATE = '2025-09-22', SCRAPPED = [12, 28];
 const INTEREST_PA = 0.18;
+const MAX_PAY_LAG = 365; // a payment more than a year after its bill is never matched to it
+const PAY_WINDOW = 90; // days after a bill in which a payment is searched for a split or combined match
 
 const SEED = {
   suppliers: {
@@ -135,21 +140,23 @@ const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Da
 
 // Narration digits end with the invoice's last number: "NEFT ARORA WIRES AW442" refers to AW-0442.
 function refersTo(p, inv) {
-  const last = (String(inv).match(/\d+/g) || []).pop();
-  if (!last) return false;
-  const want = String(+last);
-  return (String(p.ref).match(/\d+/g) || []).some((run) => String(+run).endsWith(want));
+  const parts = String(inv).match(/\d+/g) || [];
+  if (!parts.length) return false;
+  const want = String(+parts[parts.length - 1]);
+  return (String(p.ref).match(/\d+/g) || []).some((run) => String(+run) === want || (parts.length > 1 && String(+run).endsWith(want) && run.length > want.length));
 }
 // Who was paid, read from the narration. Ambiguous or unknown narrations stay unassigned for a person to allocate.
 const LEGAL = new Set(['PVT', 'LTD', 'PRIVATE', 'LIMITED', 'CO', 'M/S', 'AND', 'THE']);
 function payeeOf(p, suppliers) {
   if (p.sup) return p.sup;
   const words = new Set(String(p.ref).toUpperCase().split(/[^A-Z0-9]+/));
-  let best = null, bestScore = 0, tie = false;
+  let best = null, bestScore = 0, bestHits = 0, tie = false;
   for (const k in suppliers) {
     const toks = suppliers[k].name.toUpperCase().split(/[^A-Z0-9]+/).filter((t) => t && !LEGAL.has(t));
-    const score = toks.filter((t) => words.has(t)).length / toks.length;
-    if (score > bestScore) { best = k; bestScore = score; tie = false; } else if (score === bestScore && score > 0) tie = true;
+    const hits = toks.filter((t) => words.has(t)).length, score = toks.length ? hits / toks.length : 0;
+    // A fuller name wins a tie: "Zutshi Power Tools" over "Zutshi Tools" when the narration names all three words.
+    if (score > bestScore || (score === bestScore && score > 0 && hits > bestHits)) { best = k; bestScore = score; bestHits = hits; tie = false; }
+    else if (score === bestScore && score > 0 && hits === bestHits) tie = true;
   }
   return bestScore >= 0.6 && !tie ? best : null;
 }
@@ -213,12 +220,13 @@ function runEngine(D) {
   };
 
   // Pass 1: match each book entry to GSTR-2B and run the bill-level GST checks.
-  const live = [];
+  const live = [], liveBy = new Map();
   for (const b of D.books) {
     b._g = null; b._p = null; b._conf = null;
     const k = key(b);
     if (seen.has(k)) { push('duplicate', b, tax(b), { twin:seen.get(k) }); b._dup = true; continue; }
     b._dup = false; seen.set(k, b.id); live.push(b);
+    if (!liveBy.has(b.sup)) liveBy.set(b.sup, []); liveBy.get(b.sup).push(b);
     let g = free(byKey.get(k)), conf = 1, typo = false;
     if (!g) { const c = free(byDigits.get(dkey(b))); if (c && Math.abs(c.taxable - b.taxable) <= 1) { g = c; conf = 0.9; } }
     if (!g && !gstinValid(gOf(b))) {
@@ -249,19 +257,19 @@ function runEngine(D) {
   const paysBy = new Map();
   for (const p of D.bank) { p._sup = payeeOf(p, D.suppliers); if (!p._sup) continue; if (!paysBy.has(p._sup)) paysBy.set(p._sup, []); paysBy.get(p._sup).push(p); }
   for (const list of paysBy.values()) list.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-  const avail = (sup, from) => (paysBy.get(sup) || []).filter((p) => !usedP.has(p.id) && p.date >= from);
+  const avail = (sup, from) => (paysBy.get(sup) || []).filter((p) => !usedP.has(p.id) && p.date >= from && (from < '1000' || days(from, p.date) <= MAX_PAY_LAG));
   const byDate = live.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   // 2a: one payment for one bill, preferring a payment whose narration names the invoice.
   for (const b of byDate) {
     const T = total(b), ps = avail(b.sup, b.date).filter((p) => Math.abs(p.amount - T) <= 1);
     // Otherwise take one that doesn't name a different bill of this supplier.
-    const p = ps.find((x) => refersTo(x, b.inv)) || ps.find((x) => !live.some((o) => o !== b && o.sup === b.sup && refersTo(x, o.inv)));
+    const p = ps.find((x) => refersTo(x, b.inv)) || ps.find((x) => !liveBy.get(b.sup).some((o) => o !== b && refersTo(x, o.inv)));
     if (p) { usedP.add(p.id); b._p = [p.id]; }
   }
   // 2b: one bill paid in 2 or 3 parts. Raised for a person to confirm.
   for (const b of byDate) {
     if (b._p) continue;
-    const T = total(b), pays = avail(b.sup, b.date);
+    const T = total(b), pays = avail(b.sup, b.date).filter((p) => days(b.date, p.date) <= PAY_WINDOW);
     let parts = null;
     outer: for (let i = 0; i < pays.length; i++) for (let j = i + 1; j < pays.length; j++) {
       if (Math.abs(pays[i].amount + pays[j].amount - T) <= 1) { parts = [pays[i], pays[j]]; break outer; }
@@ -274,7 +282,7 @@ function runEngine(D) {
   for (const b of byDate) if (!b._p) { if (!unpaidBy.has(b.sup)) unpaidBy.set(b.sup, []); unpaidBy.get(b.sup).push(b); }
   for (const [sup, bills] of unpaidBy) {
     for (const p of avail(sup, '0000')) {
-      const U = bills.filter((b) => !b._p && b.date <= p.date);
+      const U = bills.filter((b) => !b._p && b.date <= p.date && days(b.date, p.date) <= PAY_WINDOW);
       let set = null;
       outer: for (let i = 0; i < U.length; i++) for (let j = i + 1; j < U.length; j++) {
         if (Math.abs(total(U[i]) + total(U[j]) - p.amount) <= 1) { set = [U[i], U[j]]; break outer; }
@@ -289,7 +297,8 @@ function runEngine(D) {
   // 2d: the same bill paid again. Only when the narration names that invoice, so a recurring same-amount bill is never mistaken for it.
   for (const b of byDate) {
     if (!b._p || b._p.length !== 1) continue;
-    const again = avail(b.sup, b.date).find((p) => Math.abs(p.amount - total(b)) <= 1 && refersTo(p, b.inv));
+    const first = D.bank.find((x) => x.id === b._p[0]);
+    const again = avail(b.sup, b.date).find((p) => Math.abs(p.amount - total(b)) <= 1 && refersTo(p, b.inv) && days(first.date, p.date) <= PAY_WINDOW);
     if (again) { usedP.add(again.id); push('doublePay', b, again.amount, { pay:again.id, first:b._p[0] }); }
   }
   // 2e: unpaid after 180 days. Reverse in proportion to the unpaid part; part-payments are those naming the invoice.

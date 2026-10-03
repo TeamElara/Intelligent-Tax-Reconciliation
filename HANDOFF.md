@@ -49,3 +49,12 @@ React + Vite front end, FastAPI + Pydantic, DuckDB/Polars for joins (SQLite in d
 ## Known nits
 - Google Fonts need internet; at the venue, consider self-hosting the woff2 files.
 - Supplier table scrolls horizontally on phones by design.
+
+## Commands (Node 18+, no installs)
+- `node tools/check-seed.js`: run the engine on the built-in sample and assert the expected issues.
+- `node tools/gen.js`: regenerate `data/demo` (small, one example of every error type) and `data/test` (300 suppliers, 18 months, ~38,500 books; git-ignored, 8 MB). `--seed 42` by default.
+- `node tools/eval.js`: score `engine.js` against the labels in `data/test` and write `data/eval.json` and `data/eval.js` (the dashboard's Accuracy section reads the latter).
+- `node tools/serve.js 8765`: static server for local preview (`file://` also works).
+
+## What the accuracy numbers mean
+The generator plants 13 error types plus "trap" bills (invoice-format variants, ₹1 rounding, recurring same-amount bills, pre-switch rates, financial-year restarts, generic bank narrations) that must stay unflagged. The errors follow the rules the engine implements, so ~100% shows the engine is consistent with its own spec, not that it will score the same on real books. Say so if asked.

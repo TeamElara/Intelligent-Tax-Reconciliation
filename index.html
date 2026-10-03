@@ -386,6 +386,20 @@ table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display);
   html { scroll-behavior:auto; }
   *, *::before, *::after { animation-duration:.001s !important; animation-iteration-count:1 !important; transition-duration:.001s !important; }
 }
+/* ---------- Accuracy ---------- */
+.acc-tiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:16px; }
+.acc-tile { border-radius:var(--r); border:1px solid var(--line); background:var(--surface); padding:16px 18px; }
+.acc-tile span { display:block; color:var(--muted); font-size:13.5px; }
+.acc-tile strong { display:block; font-size:30px; font-weight:700; line-height:1.15; margin-top:2px; }
+.acc-tile small { display:block; color:var(--muted); font-size:13px; margin-top:2px; }
+table.acc { width:100%; border-collapse:collapse; font-size:14.5px; min-width:640px; }
+table.acc th { text-align:right; font-size:12.5px; color:var(--faint); font-weight:600; padding:12px 16px; border-bottom:1px solid var(--line); }
+table.acc td { text-align:right; padding:11px 16px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+table.acc th:first-child, table.acc td:first-child { text-align:left; }
+table.acc tr:last-child td { border-bottom:0; }
+table.acc .miss { color:var(--red); font-weight:600; }
+.acc-note { margin:12px 2px 0; color:var(--muted); font-size:13.5px; max-width:90ch; }
+@media (max-width:1020px) { .acc-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 </style>
 </head>
 <body>
@@ -403,6 +417,7 @@ table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display);
       <a href="#suppliers" data-nav="suppliers"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg><span>Suppliers</span></a>
       <a href="#liability" data-nav="liability"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/></svg><span>Tax liability</span></a>
       <a href="#sources" data-nav="sources"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><span>Sources</span></a>
+      <a href="#accuracy" data-nav="accuracy"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-6"/></svg><span>Accuracy</span></a>
     </nav>
     <div class="side-sep"></div>
     <button class="side-btn" type="button" data-open="ask"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg><span>Ask Rekora</span><kbd>/</kbd></button>
@@ -511,6 +526,13 @@ table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display);
       <div class="sources" id="srcGrid"></div>
     </section>
 
+    <section class="section" id="accuracy" aria-labelledby="accTitle" hidden>
+      <div class="sec-head"><div><h2 id="accTitle">Accuracy</h2><p id="accSub">Measured on our synthetic test set, with the same engine this dashboard runs.</p></div></div>
+      <div class="acc-tiles" id="accTiles"></div>
+      <div class="table-wrap"><table class="acc"><thead><tr><th>Error type</th><th>Planted</th><th>Caught</th><th>Recall</th><th>Wrongly flagged</th><th>₹ caught of ₹ planted</th></tr></thead><tbody id="accBody"></tbody></table></div>
+      <p class="acc-note" id="accNote"></p>
+    </section>
+
     <footer class="foot"><span>Illustrative data for a fictional company. HSN rates come from a demo rate master.</span><span>Rekora, built for Fintechstico v7.0</span></footer>
   </main>
 </div>
@@ -547,6 +569,7 @@ table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display);
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script src="engine.js"></script>
+<script src="data/eval.js"></script>
 <script>
 /* =====================================================================
    DATA: the sample (SEED), rate master and engine live in engine.js, shared with the Node tools.
@@ -615,7 +638,25 @@ function animateNum(el, to, fmt = inr, dur = 900) {
   requestAnimationFrame(step);
 }
 function renderAll() {
-  renderHero(); renderStatus(); renderQueue(); renderEvidence(); renderSuppliers(); renderLiability(); renderSources(); renderChaos();
+  renderAccuracy(); renderHero(); renderStatus(); renderQueue(); renderEvidence(); renderSuppliers(); renderLiability(); renderSources(); renderChaos();
+}
+const TYPE_ORDER = ['missing2b', 'missingBooks', 'amount', 'taxValue', 'gstin', 'rate', 'taxType', 'duplicate', 'unpaid180', 'split', 'combined', 'doublePay', 'spike'];
+function renderAccuracy() {
+  const sec = $('#accuracy'), ev = window.REKORA_EVAL;
+  if (!ev) { sec.hidden = true; return; }
+  sec.hidden = false;
+  const o = ev.overall, g = ev.generated, pct = (x) => (x * 100).toFixed(1) + '%', n = (x) => x.toLocaleString('en-IN');
+  $('#accTiles').innerHTML = [
+    ['Bills checked', n(g.books), `${n(g.suppliers)} suppliers, ${g.from} to ${g.to}`],
+    ['Errors planted', n(g.planted), `${g.plantedTypes} types, labelled in advance`],
+    ['Recall', pct(o.recall), `precision ${pct(o.precision)}, ₹-weighted ${pct(o.weightedRecall)}`],
+    ['Traps wrongly flagged', `${ev.traps.flagged} of ${n(ev.traps.total)}`, 'correct bills that only look different'],
+  ].map(([l, v, s]) => `<div class="acc-tile"><span>${l}</span><strong class="num">${v}</strong><small>${s}</small></div>`).join('');
+  $('#accBody').innerHTML = TYPE_ORDER.filter((t) => ev.perType[t]).map((t) => {
+    const m = ev.perType[t];
+    return `<tr><td>${TYPES[t].label}</td><td>${n(m.planted)}</td><td>${n(m.detected)}</td><td class="${m.missed ? 'miss' : ''}">${pct(m.recall)}</td><td class="${m.falsePositives ? 'miss' : ''}">${m.falsePositives}</td><td>${inr(m.rupeesCaught)} of ${inr(m.rupeesPlanted)}</td></tr>`;
+  }).join('');
+  $('#accNote').textContent = `The errors were planted by our own generator, following the rules this engine implements, so this shows the engine is consistent and fast (${n(o.billsPerSecond)} bills a second), not that it will score the same on real books. Real data comes next.`;
 }
 function renderHero() {
   const t = S.totals;
@@ -1133,7 +1174,7 @@ $('#askForm').addEventListener('submit', (e) => { e.preventDefault(); const i = 
 }));
 // Scroll-spy for the sidebar
 const spy = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) $$('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.nav === en.target.id)); }), { rootMargin:'-40% 0px -55% 0px' });
-['overview', 'queue', 'suppliers', 'liability', 'sources'].forEach((id) => spy.observe(document.getElementById(id)));
+['overview', 'queue', 'suppliers', 'liability', 'sources', 'accuracy'].forEach((id) => spy.observe(document.getElementById(id)));
 
 /* Boot */
 let saved = null; try { saved = localStorage.getItem('rekora-theme'); } catch (e) {}
