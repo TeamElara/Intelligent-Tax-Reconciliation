@@ -16,7 +16,8 @@ Design rule (say it in the pitch): **Rules compute. ML flags. The LLM explains. 
 - Call it out directly if the build stalls around 80%. Chaos Mode is the demo moment and must work first.
 
 ## Files
-- `index.html`: the full front-end prototype. One file, vanilla JS, no build step. Open it in a browser.
+- `index.html` + `assets/app.js` + `assets/app.css`: the guided seven-step app (Guided / Full access toggle, light and dark). It ports every feature below from the classic dashboard onto the same engine, ingest and ML code. Fonts and Lenis are self-hosted in `assets/`.
+- `classic.html`: the earlier single-page dashboard. The "What index.html already does" notes below describe it; the logic is the same in `assets/app.js`.
   - Fonts: Eczar (display and ₹ figures) + Mukta (UI, has Devanagari for Hindi drafts), loaded from Google Fonts.
   - Dark "ledger ink" theme by default, light "ledger paper" theme via the toggle.
 - Also produced in chat (not in this folder): `Elara_Rekora_Fintechstico.pptx` (19-slide deck), architecture PNG, dashboard mockup PNG, pitch cheat sheet.
