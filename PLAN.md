@@ -22,10 +22,10 @@ Written Sat 3 Oct 2026. v3 splits the v2 plan into phases. Each phase ships on i
 ```
 Phase 0  Setup                    20:15-20:30   done
 Phase 1  Rebrand + honest wording 20:30-21:00   Mahatva
-Phase 2  Shared engine + rule fixes 20:30-21:45 Arihant + Claude
-Phase 3  Generator + accuracy     21:45-22:30   Claude (Arihant reviews)
-Phase 4  Upload flow              22:15-22:45   Claude + Arihant
-Phase 5  Chaos trap               22:30-22:45   Claude
+Phase 2  Shared engine + rule fixes 20:30-21:45 Arihant
+Phase 3  Generator + accuracy     21:45-22:30   the team (Arihant reviews)
+Phase 4  Upload flow              22:15-22:45   Arihant
+Phase 5  Chaos trap               22:30-22:45   
 --- 22:45 FREEZE, bug bash ---
 Phase 6  Video + submit           23:00-01:00   Mahatva records, Arihant drives
 --- 03:00 results ---
@@ -63,7 +63,7 @@ Tasks
 ---
 
 ## Phase 2: Shared engine and rule fixes
-**Owner:** Arihant + Claude · **Branch:** `phase-2-engine` · **Cut-off:** 21:45 · **Files:** new `engine.js`, `index.html` (script section), new `tools/check-seed.js`
+**Owner:** Arihant · **Branch:** `phase-2-engine` · **Cut-off:** 21:45 · **Files:** new `engine.js`, `index.html` (script section), new `tools/check-seed.js`
 
 **2a. Extract (do first, merge alone if time is short)**
 - Move the data constants, helpers, `TYPES`, `runEngine` and `groupIssues` into `engine.js`. It works in the browser (`<script src="engine.js">`) and in Node (`module.exports`).
@@ -99,7 +99,7 @@ Tasks
 ---
 
 ## Phase 3: Generator and accuracy table
-**Owner:** Claude, Arihant reviews · **Branch:** `phase-3-accuracy` · **Cut-off:** 22:30 · **Files:** `tools/gen.js`, `tools/eval.js`, `data/`, `index.html` (Accuracy card)
+**Owner:** Arihant · **Branch:** `phase-3-accuracy` · **Cut-off:** 22:30 · **Files:** `tools/gen.js`, `tools/eval.js`, `data/`, `index.html` (Accuracy card)
 **Depends on:** Phase 2a
 
 Tasks
@@ -123,7 +123,7 @@ Tasks
 ---
 
 ## Phase 4: Upload flow
-**Owner:** Claude + Arihant · **Branch:** `phase-4-upload` · **Cut-off:** 22:45 · **Files:** `index.html`
+**Owner:** Arihant · **Branch:** `phase-4-upload` · **Cut-off:** 22:45 · **Files:** `index.html`
 **Depends on:** Phase 2 (Phase 3 provides the demo CSVs; until then, CSVs exported from SEED work)
 
 Tasks
@@ -142,7 +142,7 @@ Tasks
 ---
 
 ## Phase 5: Chaos Mode trap
-**Owner:** Claude · **Branch:** `phase-5-trap` · **Cut-off:** 22:45 · **Files:** `index.html`
+**Owner:** Arihant · **Branch:** `phase-5-trap` · **Cut-off:** 22:45 · **Files:** `index.html`
 **Depends on:** Phase 2
 
 Tasks
@@ -186,7 +186,7 @@ Skip any row whose phase didn't ship. Never narrate a feature that isn't on scre
 | # | Task | Owner |
 |---|---|---|
 | 7.1 | Fix every bug noted during the bug bash and recording | Arihant |
-| 7.2 | Finish any phase 3-5 that was cut | Arihant + Claude |
+| 7.2 | Finish any phase 3-5 that was cut | Arihant |
 | 7.3 | Self-host the Eczar and Mukta woff2 fonts (venue wifi) | Arihant |
 | 7.4 | Deck: slide 7 "prototype vs production"; delete "every Confirm tunes thresholds"; slide 9 measured numbers; "Potential credit to review"; corrected portal answer; one accuracy slide | Mahatva |
 | 7.5 | Rehearse the live demo 5 times in a row without a failure. Prep the Q&A below | both |

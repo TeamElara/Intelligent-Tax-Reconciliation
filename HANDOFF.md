@@ -1,4 +1,4 @@
-# Rekora (formerly TaxLens): handoff from claude.ai chat
+# Rekora (formerly TaxLens): project handoff
 
 Read this first, then PLAN.md (the time-boxed build plan, supersedes "Next steps" below). Product name is **Rekora** (Team Elara: Arihant Jain, Mahatva Goel); the UI still says TaxLens until the rebrand lands.
 

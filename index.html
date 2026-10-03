@@ -194,7 +194,7 @@ a { color:inherit; text-decoration:none; }
 .q-row .inv b { font-weight:500; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .tag { display:inline-flex; align-items:center; gap:6px; border-radius:7px; padding:2px 9px; font-size:13px; font-weight:600; white-space:nowrap; }
 .tag.risk { background:var(--amber-bg); color:var(--amber); } .tag.recover, .tag.confirm { background:var(--mint-bg); color:var(--mint); }
-.tag.reverse { background:var(--red-bg); color:var(--red); } .tag.review { background:var(--plum-bg); color:var(--plum); }
+.tag.reverse { background:var(--red-bg); color:var(--red); } .tag.leak { background:var(--surface-2); color:var(--muted); box-shadow:inset 0 0 0 1px var(--line-2); } .tag.review { background:var(--plum-bg); color:var(--plum); }
 .q-row .why { display:block; color:var(--muted); font-size:13px; margin-top:3px; line-height:1.35; }
 .q-row.new { animation:arrive 1.8s ease; }
 @keyframes arrive { 0% { background:var(--red-bg); transform:translateX(12px); opacity:0; } 15% { opacity:1; transform:none; } 70% { background:var(--red-bg); } 100% { background:transparent; } }
@@ -546,100 +546,14 @@ table.heads tfoot td:last-child { color:var(--mint); font-family:var(--display);
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
+<script src="engine.js"></script>
 <script>
 /* =====================================================================
-   DATA: replace SEED with responses from your FastAPI backend.
+   DATA: the sample (SEED), rate master and engine live in engine.js, shared with the Node tools.
    ===================================================================== */
-const BUYER = { name:'Mehta Electricals Pvt Ltd', gstin:'07AABCM4521K1ZK', state:'07' };
-const AS_OF = '2026-09-30';
-const STATES = { '03':'Punjab', '06':'Haryana', '07':'Delhi', '08':'Rajasthan', '09':'Uttar Pradesh' };
-const HSN = {
-  '7214':{ d:'Steel bars and rods', h:[['2017-07-01',18]] },
-  '8536':{ d:'Switches and sockets', h:[['2017-07-01',18]] },
-  '8544':{ d:'Insulated wires and cables', h:[['2017-07-01',18]] },
-  '7318':{ d:'Screws, bolts and nuts', h:[['2017-07-01',18]] },
-  '7408':{ d:'Copper wire', h:[['2017-07-01',18]] },
-  '3923':{ d:'Plastic packing articles', h:[['2017-07-01',18]] },
-};
-const GST2_DATE = '2025-09-22', SCRAPPED = [12, 28];
 // Full-month aggregates (2,148 bills). The sample bills below are the ones shown in the queue.
 const BASE = { booksITC:4860000, risk:412380, recover:236450, reverse:218600, output:{ igst:2200000, cgst:2000000, sgst:2000000 }, itcShare:{ igst:.3289, cgst:.33555, sgst:.33555 } };
 const BASE_COUNTS = { total:2148, matched:1873, diff:96, confirm:41, unmatched:112, dup:26 };
-
-const SEED = {
-  suppliers: {
-    gupta:{ name:'Gupta Steel Traders', gstin:'06AADFG7781Q1ZO', base:35, bills:14, filing:'Last filed for July', late:true },
-    balaji:{ name:'Shree Balaji Enterprises', gstin:'07AAHFS3318P1ZR', base:52, bills:6, filing:'On time', hist:[8200,9800,11000,9400,10500,9100,9800] },
-    kapoor:{ name:'Kapoor Cables', gstin:'07AACFK2290L1Z7', base:20, bills:9, filing:'On time' },
-    arora:{ name:'Arora Wires', gstin:'09AAKFA1234M1ZD', base:15, bills:11, filing:'On time' },
-    sharma:{ name:'Sharma Switchgear', gstin:'07AAJFS6614D1Z9', base:10, bills:8, filing:'On time' },
-    jain:{ name:'Jain Lighting', gstin:'07AAEFJ4471C1ZM', base:8, bills:5, filing:'On time' },
-    bloom:{ name:'Bloom Traders', gstin:'08AAFFB9902K1Z8', base:22, bills:7, filing:'Filed late', late:true },
-    orbit:{ name:'Orbit Office Solutions', gstin:'07AABCO7731E1ZL', base:18, bills:4, filing:'On time' },
-    nova:{ name:'Nova Supplies', gstin:'06AACFN5518H1ZE', base:12, bills:3, filing:'On time' },
-    mira:{ name:'Mira Packaging', gstin:'07AAGFM5521R1ZT', base:9, bills:10, filing:'On time' },
-    dpt:{ name:'Delhi Power Tools', gstin:'07AACCD3381F1ZV', base:6, bills:12, filing:'On time' },
-    bansal:{ name:'Bansal Electric Co', gstin:'06AAGFB2207N1ZL', base:7, bills:15, filing:'On time' },
-    verma:{ name:'Verma Fasteners', gstin:'07AAKFV8812G1ZV', base:5, bills:20, filing:'On time' },
-    singh:{ name:'Singh Copper Works', gstin:'03AAHFS6644B1ZH', base:8, bills:6, filing:'On time' },
-    rathi:{ name:'Rathi Cables', gstin:'08AACFR1199M1ZQ', base:6, bills:9, filing:'On time' },
-    agarwal:{ name:'Agarwal Switch House', gstin:'07AAEFA7720J1ZI', base:5, bills:7, filing:'On time' },
-  },
-  books: [
-    { id:'B01', sup:'gupta', inv:'INV-311', date:'2026-09-04', hsn:'7214', taxable:240000, rate:18, cgst:0, sgst:0, igst:43200 },
-    { id:'B02', sup:'gupta', inv:'INV-312', date:'2026-09-11', hsn:'7214', taxable:210000, rate:18, cgst:0, sgst:0, igst:37800 },
-    { id:'B03', sup:'gupta', inv:'INV-318', date:'2026-09-22', hsn:'7214', taxable:240000, rate:18, cgst:0, sgst:0, igst:43200 },
-    { id:'B04', sup:'balaji', inv:'SBE/2026/0918', date:'2026-09-13', hsn:'8536', taxable:304000, rate:18, cgst:27360, sgst:27360, igst:0 },
-    { id:'B05', sup:'kapoor', inv:'KC-1187', date:'2026-04-01', hsn:'8544', taxable:270000, rate:18, cgst:24300, sgst:24300, igst:0 },
-    { id:'B06', sup:'arora', inv:'AW-0442', date:'2026-09-12', hsn:'8544', taxable:212000, rate:18, cgst:19080, sgst:19080, igst:0 },
-    { id:'B07', sup:'sharma', inv:'SS/442', date:'2026-09-09', hsn:'8536', taxable:149500, rate:18, cgst:13455, sgst:13455, igst:0 },
-    { id:'B08', sup:'sharma', inv:'SS-442', date:'2026-09-09', hsn:'8536', taxable:149500, rate:18, cgst:13455, sgst:13455, igst:0 },
-    { id:'B09', sup:'jain', inv:'JL-2201', date:'2026-09-05', hsn:'8536', taxable:55000, rate:18, cgst:4950, sgst:4950, igst:0 },
-    { id:'B10', sup:'bloom', inv:'BT-1088', date:'2026-09-20', hsn:'8544', taxable:152000, rate:18, cgst:0, sgst:0, igst:27360 },
-    { id:'B11', sup:'orbit', inv:'OOS-073', date:'2026-09-21', hsn:'8536', taxable:125000, rate:28, cgst:17500, sgst:17500, igst:0 },
-    { id:'B12', sup:'mira', gstin:'07AAGFN5521R1ZT', inv:'MP-556', date:'2026-09-14', hsn:'3923', taxable:40000, rate:18, cgst:3600, sgst:3600, igst:0 },
-    { id:'B13', sup:'dpt', inv:'DPT-2210', date:'2026-09-03', hsn:'8536', taxable:88000, rate:18, cgst:7920, sgst:7920, igst:0 },
-    { id:'B14', sup:'bansal', inv:'BEC/0981', date:'2026-09-07', hsn:'8544', taxable:164000, rate:18, cgst:0, sgst:0, igst:29520 },
-    { id:'B15', sup:'verma', inv:'VF-3307', date:'2026-09-11', hsn:'7318', taxable:36500, rate:18, cgst:3285, sgst:3285, igst:0 },
-    { id:'B16', sup:'singh', inv:'SCW-118', date:'2026-09-16', hsn:'7408', taxable:248000, rate:18, cgst:0, sgst:0, igst:44640 },
-    { id:'B17', sup:'rathi', inv:'RC-7740', date:'2026-09-19', hsn:'8544', taxable:92000, rate:18, cgst:0, sgst:0, igst:16560 },
-    { id:'B18', sup:'agarwal', inv:'ASH-0563', date:'2026-09-23', hsn:'8536', taxable:58000, rate:18, cgst:5220, sgst:5220, igst:0 },
-  ],
-  g2b: [
-    { id:'G04', sup:'balaji', inv:'SBE-2026-918', date:'2026-09-13', taxable:304000, cgst:27360, sgst:27360, igst:0 },
-    { id:'G05', sup:'kapoor', inv:'KC-1187', date:'2026-04-01', taxable:270000, cgst:24300, sgst:24300, igst:0 },
-    { id:'G06', sup:'arora', inv:'AW/442', date:'2026-09-12', taxable:212000, cgst:19080, sgst:19080, igst:0 },
-    { id:'G07', sup:'sharma', inv:'SS-442', date:'2026-09-09', taxable:149500, cgst:13455, sgst:13455, igst:0 },
-    { id:'G09', sup:'jain', inv:'JL2201', date:'2026-09-05', taxable:55000, cgst:4950, sgst:4950, igst:0 },
-    { id:'G10', sup:'bloom', inv:'BT-1088', date:'2026-09-20', taxable:82800, cgst:0, sgst:0, igst:14904 },
-    { id:'G11', sup:'orbit', inv:'OOS-73', date:'2026-09-21', taxable:125000, cgst:17500, sgst:17500, igst:0 },
-    { id:'G12', sup:'mira', inv:'MP/556', date:'2026-09-14', taxable:40000, cgst:3600, sgst:3600, igst:0 },
-    { id:'G13', sup:'dpt', inv:'DPT2210', date:'2026-09-03', taxable:88000, cgst:7920, sgst:7920, igst:0 },
-    { id:'G14', sup:'bansal', inv:'BEC-981', date:'2026-09-07', taxable:164000, cgst:0, sgst:0, igst:29520 },
-    { id:'G15', sup:'verma', inv:'VF3307', date:'2026-09-11', taxable:36500, cgst:3285, sgst:3285, igst:0 },
-    { id:'G16', sup:'singh', inv:'SCW/118', date:'2026-09-16', taxable:248000, cgst:0, sgst:0, igst:44640 },
-    { id:'G17', sup:'rathi', inv:'RC-7740', date:'2026-09-19', taxable:92000, cgst:0, sgst:0, igst:16560 },
-    { id:'G18', sup:'agarwal', inv:'ASH-563', date:'2026-09-23', taxable:58000, cgst:5220, sgst:5220, igst:0 },
-    { id:'G19', sup:'nova', inv:'NS-1042', date:'2026-09-18', taxable:100000, cgst:0, sgst:0, igst:18000 },
-  ],
-  bank: [
-    { id:'P06', sup:'arora', date:'2026-09-15', amount:250160, ref:'NEFT AW442' },
-    { id:'P07', sup:'sharma', date:'2026-09-16', amount:176410, ref:'NEFT SS442' },
-    { id:'P09', sup:'jain', date:'2026-09-10', amount:40000, ref:'IMPS JL2201 PART' },
-    { id:'P10', sup:'jain', date:'2026-09-24', amount:24900, ref:'IMPS JL2201 BAL' },
-    { id:'P11', sup:'bloom', date:'2026-09-27', amount:179360, ref:'RTGS BT1088' },
-    { id:'P12', sup:'orbit', date:'2026-09-29', amount:160000, ref:'NEFT OOS073' },
-    { id:'P13', sup:'mira', date:'2026-09-18', amount:47200, ref:'UPI MP556' },
-    { id:'P14', sup:'dpt', date:'2026-09-08', amount:103840, ref:'NEFT DPT2210' },
-    { id:'P15', sup:'bansal', date:'2026-09-17', amount:193520, ref:'RTGS BEC981' },
-    { id:'P16', sup:'verma', date:'2026-09-14', amount:43070, ref:'UPI VF3307' },
-    { id:'P17', sup:'singh', date:'2026-09-22', amount:292640, ref:'RTGS SCW118' },
-    { id:'P18', sup:'rathi', date:'2026-09-26', amount:108560, ref:'NEFT RC7740' },
-    { id:'P19', sup:'agarwal', date:'2026-09-28', amount:68440, ref:'NEFT ASH563' },
-    { id:'P20', sup:'nova', date:'2026-09-25', amount:118000, ref:'NEFT NS1042' },
-  ],
-};
-
 /* =====================================================================
    Helpers
    ===================================================================== */
@@ -651,102 +565,7 @@ const lakh = (n) => '₹' + (n / 1e5).toFixed(1) + ' lakh';
 const L = (n) => '₹' + (n / 1e5).toFixed(1) + 'L';
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fdate = (d) => { const [y, m, dd] = d.split('-'); return `${+dd} ${MON[+m - 1]} ${y}`; };
-const days = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
-const tax = (r) => r.cgst + r.sgst + r.igst;
-const total = (r) => r.taxable + tax(r);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const CS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-function gstinValid(g) {
-  if (!/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)) return false;
-  let s = 0;
-  for (let i = 0; i < 14; i++) { const p = CS.indexOf(g[i]) * (i % 2 ? 2 : 1); s += Math.floor(p / 36) + (p % 36); }
-  return CS[(36 - (s % 36)) % 36] === g[14];
-}
-const canon = (inv) => inv.toUpperCase().split(/[^A-Z0-9]+/).map((x) => x.replace(/^([A-Z]*)0+(?=\d)/, '$1')).join('');
-const hamming = (a, b) => a.length !== b.length ? 99 : [...a].filter((c, i) => c !== b[i]).length;
-const median = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
-function rateOn(hsn, date) { const m = HSN[hsn]; if (!m) return null; let r = null; for (const [from, rate] of m.h) if (date >= from) r = rate; return r; }
-
-/* =====================================================================
-   Engine: deterministic checks. Every rupee shown comes from here.
-   ===================================================================== */
-const TYPES = {
-  missing2b:{ label:'Missing in GSTR-2B', bucket:'risk', conf:99, group:true },
-  missingBooks:{ label:'Missing in books', bucket:'recover', conf:97 },
-  amount:{ label:'Amount mismatch', bucket:'risk', conf:98 },
-  taxValue:{ label:'Tax value mismatch', bucket:'risk', conf:99 },
-  gstin:{ label:'GSTIN typo', bucket:'risk', conf:94 },
-  rate:{ label:'Wrong GST rate', bucket:'reverse', conf:99 },
-  taxType:{ label:'Wrong tax type', bucket:'reverse', conf:99 },
-  duplicate:{ label:'Duplicate in books', bucket:'reverse', conf:97 },
-  unpaid180:{ label:'Unpaid 180+ days', bucket:'reverse', conf:99 },
-  spike:{ label:'Unusual spike', bucket:'review', conf:null },
-  split:{ label:'Split payment', bucket:'confirm', conf:92 },
-};
-function runEngine(D) {
-  const t0 = performance.now();
-  const out = [];
-  const supOf = (r) => D.suppliers[r.sup];
-  const gOf = (r) => r.gstin || supOf(r).gstin;
-  const g2bIdx = new Map(D.g2b.map((g) => [gOf(g) + '|' + canon(g.inv), g]));
-  const usedG = new Set(), usedP = new Set(), seen = new Map();
-  const push = (type, r, impact, extra = {}) => out.push(Object.assign({ type, sup:r.sup, bills:[r.id], impact:Math.round(impact) }, extra));
-
-  for (const b of D.books) {
-    b._g = null; b._p = null;
-    const key = gOf(b) + '|' + canon(b.inv);
-    if (seen.has(key)) { push('duplicate', b, tax(b), { twin:seen.get(key) }); continue; }
-    seen.set(key, b.id);
-    const valid = gstinValid(gOf(b));
-    let g = g2bIdx.get(key), typo = false;
-    if (g && usedG.has(g.id)) g = null;
-    if (!g && !valid) {
-      g = D.g2b.find((x) => !usedG.has(x.id) && canon(x.inv) === canon(b.inv) && Math.abs(x.taxable - b.taxable) <= 1 && hamming(gOf(x), gOf(b)) <= 2);
-      typo = !!g;
-    }
-    if (!g) push('missing2b', b, tax(b));
-    else {
-      usedG.add(g.id); b._g = g.id;
-      if (typo) push('gstin', b, tax(b), { good:gOf(g) });
-      if (Math.abs(b.taxable - g.taxable) > 1) push('amount', b, Math.abs(tax(b) - tax(g)), { g:g.id });
-    }
-    const expected = Math.round(b.taxable * b.rate / 100);
-    if (Math.abs(tax(b) - expected) > 1) push('taxValue', b, Math.abs(tax(b) - expected), { expected });
-    const mr = rateOn(b.hsn, b.date);
-    if (mr !== null && b.rate !== mr) push('rate', b, Math.max(0, tax(b) - Math.round(b.taxable * mr / 100)), { mr, scrapped:b.date >= GST2_DATE && SCRAPPED.includes(b.rate) });
-    const inter = gOf(b).slice(0, 2) !== BUYER.state;
-    if ((inter && (b.cgst || b.sgst)) || (!inter && b.igst)) push('taxType', b, tax(b), { inter });
-    // payments: exact single payment, else 2-3 part split
-    const pays = D.bank.filter((p) => p.sup === b.sup && !usedP.has(p.id) && p.date >= b.date);
-    const T = total(b);
-    let single = pays.find((p) => Math.abs(p.amount - T) <= 1), parts = null;
-    if (!single) {
-      outer: for (let i = 0; i < pays.length; i++) for (let j = i + 1; j < pays.length; j++) {
-        if (Math.abs(pays[i].amount + pays[j].amount - T) <= 1) { parts = [pays[i], pays[j]]; break outer; }
-        for (let k = j + 1; k < pays.length; k++) if (Math.abs(pays[i].amount + pays[j].amount + pays[k].amount - T) <= 1) { parts = [pays[i], pays[j], pays[k]]; break outer; }
-      }
-    }
-    if (single) { usedP.add(single.id); b._p = [single.id]; }
-    else if (parts) { parts.forEach((p) => usedP.add(p.id)); b._p = parts.map((p) => p.id); push('split', b, tax(b), { parts:b._p }); }
-    else { b._p = []; const age = days(b.date, AS_OF); if (age > 180) push('unpaid180', b, tax(b), { age }); }
-    const hist = supOf(b).hist;
-    if (hist && b.taxable > 8 * median(hist)) push('spike', b, tax(b), { ratio:Math.round(b.taxable / median(hist)), med:median(hist), sunday:new Date(b.date).getUTCDay() === 0 });
-  }
-  for (const g of D.g2b) if (!usedG.has(g.id)) {
-    const paid = D.bank.find((p) => p.sup === g.sup && !usedP.has(p.id) && Math.abs(p.amount - total(g)) <= 1);
-    out.push({ type:'missingBooks', sup:g.sup, bills:[g.id], impact:tax(g), paid:paid && paid.id });
-  }
-  return { issues:out, ms:performance.now() - t0 };
-}
-function groupIssues(issues) {
-  const map = new Map();
-  for (const i of issues) {
-    const key = TYPES[i.type].group ? `${i.type}|${i.sup}` : `${i.type}|${i.bills[0]}`;
-    if (!map.has(key)) map.set(key, Object.assign({}, i, { key, bills:[], impact:0, items:[] }));
-    const g = map.get(key); g.bills.push(...i.bills); g.impact += i.impact; g.items.push(i);
-  }
-  return [...map.values()];
-}
 
 /* =====================================================================
    State
@@ -778,8 +597,8 @@ function compute() {
   if (!S.sel || !S.groups.find((g) => g.key === S.sel)) S.sel = S.groups[0] && S.groups[0].key;
 }
 function sumBuckets(groups) {
-  const o = { risk:0, recover:0, reverse:0, review:0, confirm:0 };
-  for (const g of groups) o[TYPES[g.type].bucket] += g.impact;
+  const o = { risk:0, recover:0, reverse:0, review:0, confirm:0, leak:0 };
+  for (const g of groups) o[bucketOf(g)] += g.impact;
   return o;
 }
 const supName = (k) => S.D.suppliers[k].name;
@@ -810,7 +629,7 @@ function renderHero() {
   $$('.bucket').forEach((el) => el.classList.toggle('active', el.dataset.filter === S.filter));
   drawWaterfall();
 }
-function sumCount(groups) { const o = { risk:0, recover:0, reverse:0, review:0, confirm:0 }; groups.forEach((g) => o[TYPES[g.type].bucket]++); return o; }
+function sumCount(groups) { const o = { risk:0, recover:0, reverse:0, review:0, confirm:0, leak:0 }; groups.forEach((g) => o[bucketOf(g)]++); return o; }
 
 function drawWaterfall() {
   const t = S.totals;
@@ -880,7 +699,7 @@ function renderStatus() {
 function visibleGroups() {
   const q = S.query.trim().toLowerCase();
   return S.groups.filter((g) => {
-    if (S.filter !== 'all' && TYPES[g.type].bucket !== S.filter && !(S.filter === 'review' && TYPES[g.type].bucket === 'confirm')) return false;
+    if (S.filter !== 'all' && bucketOf(g) !== S.filter && !(S.filter === 'review' && ['confirm', 'leak'].includes(bucketOf(g)))) return false;
     if (!q) return true;
     const hay = [supName(g.sup), TYPES[g.type].label, ...g.bills.map((id) => rec(id).inv)].join(' ').toLowerCase();
     return hay.includes(q);
@@ -891,15 +710,17 @@ function shortWhy(g) {
   switch (g.type) {
     case 'missing2b': return s.late ? 'Supplier hasn\'t filed GSTR-1' : 'Not reported by the supplier yet';
     case 'missingBooks': return i.paid ? 'You paid it but never booked it' : 'Reported to you, not booked';
-    case 'amount': return 'Books and GSTR-2B disagree on value';
-    case 'taxValue': return 'Tax doesn\'t equal rate × value';
-    case 'gstin': return 'Books GSTIN fails the checksum';
+    case 'amount': return i.bucket === 'recover' ? 'GSTR-2B shows more than your bill' : 'Books and GSTR-2B disagree on value';
+    case 'taxValue': return i.bucket === 'recover' ? 'Booked tax is below rate × value' : 'Tax doesn\'t equal rate × value';
+    case 'gstin': return 'Books GSTIN fails the checksum, confirm the supplier';
     case 'rate': return i.scrapped ? `${rec(g.bills[0]).rate}% slab was scrapped in 2025` : 'Rate differs from the rate master';
     case 'taxType': return i.inter ? 'CGST + SGST on an inter-state bill' : 'IGST on an intra-state bill';
     case 'duplicate': return 'Same bill entered twice';
-    case 'unpaid180': return `Unpaid for ${i.age} days`;
+    case 'unpaid180': return `${inr(i.unpaid)} unpaid for ${i.age} days`;
     case 'spike': return `${i.ratio}× this supplier's usual bill`;
-    case 'split': return `Paid in ${i.parts.length} parts, ${TYPES.split.conf}% sure`;
+    case 'split': return `Paid in ${i.parts.length} parts, needs your confirmation`;
+    case 'combined': return `${g.bills.length} bills paid in one transfer, needs your confirmation`;
+    case 'doublePay': return 'Same bill paid twice, cash to recover';
   }
 }
 function renderQueue() {
@@ -913,7 +734,7 @@ function renderQueue() {
       const invs = g.bills.map((id) => rec(id).inv);
       return `<button class="q-row ${S.newKeys.has(g.key) ? 'new' : ''}" role="option" aria-selected="${g.key === S.sel}" data-key="${esc(g.key)}">
         <span class="imp num">${inr(g.impact)}</span>
-        <span class="iss"><span class="tag ${ty.bucket}">${ty.label}</span>${S.newKeys.has(g.key) ? '<span class="badge-new">New</span>' : ''}<span class="why">${esc(shortWhy(g))}</span></span>
+        <span class="iss"><span class="tag ${bucketOf(g)}">${ty.label}</span>${S.newKeys.has(g.key) ? '<span class="badge-new">New</span>' : ''}<span class="why">${esc(shortWhy(g))}</span></span>
         <span class="who"><b>${esc(supName(g.sup))}</b><span>${STATES[st] || 'State ' + st}</span></span>
         <span class="inv"><b>${esc(invs.join(', '))}</b><span>${g.bills.length > 1 ? g.bills.length + ' bills' : fdate(rec(g.bills[0]).date)}</span></span>
       </button>`;
@@ -930,6 +751,7 @@ function evidenceRows(g, b) {
   const src = twin || book;
   const g2 = src ? (src._g ? S.D.g2b.find((x) => x.id === src._g) : null) : S.D.g2b.find((x) => x.id === b);
   const pays = src && src._p ? src._p.map((id) => S.D.bank.find((p) => p.id === id)) : (i.paid ? [S.D.bank.find((p) => p.id === i.paid)] : []);
+  if (g.type === 'doublePay') pays.push(S.D.bank.find((p) => p.id === i.pay));
   const gst = (r) => r ? (r.gstin || S.D.suppliers[r.sup].gstin) : null;
   const C = (val, cls = '') => `<td class="${cls}">${val}</td>`;
   const NONE = (t) => `<td class="none">${t}</td>`;
@@ -953,16 +775,18 @@ function explain(g) {
   const st = STATES[s.gstin.slice(0, 2)] || 'another state';
   switch (g.type) {
     case 'missing2b': return `${g.bills.length > 1 ? g.bills.length + ' bills' : 'This bill'} (${g.bills.map((id) => rec(id).inv).join(', ')}) ${g.bills.length > 1 ? 'are' : 'is'} in your books, but ${s.name} hasn't reported ${g.bills.length > 1 ? 'them' : 'it'} in GSTR-1${s.late ? ' (their last filing was for July)' : ''}. Claiming ${inr(g.impact)} now would exceed GSTR-2B and can trigger a DRC-01C notice. Hold the claim and the next payment until they file.`;
-    case 'missingBooks': { const p = i.paid && S.D.bank.find((x) => x.id === i.paid); return `${s.name} reported ${r.inv} (taxable ${inr(r.taxable)}, GST ${inr(tax(r))}) against your GSTIN, but it isn't in your purchase register.${p ? ` You already paid ${inr(p.amount)} on ${fdate(p.date)}, so this is a real purchase that was never booked.` : ' Check whether it\'s yours before accepting it in IMS.'} Book it and the credit is yours.`; }
-    case 'amount': { const g2 = S.D.g2b.find((x) => x.id === i.g); return `Your books show a taxable value of ${inr(r.taxable)}; ${s.name} reported ${inr(g2.taxable)}. That's ${inr(g.impact)} more credit in your books than GSTR-2B supports. Ask them to amend GSTR-1, or claim only the GSTR-2B value this month.`; }
+    case 'missingBooks': { const p = i.paid && S.D.bank.find((x) => x.id === i.paid); return `${s.name} reported ${r.inv} (taxable ${inr(r.taxable)}, GST ${inr(tax(r))}) against your GSTIN, but it isn't in your purchase register.${p ? ` Your bank shows ${inr(p.amount)} paid to them on ${fdate(p.date)}, so this looks like a real purchase that was never booked.` : ' Check whether it is yours before accepting it in IMS.'} Being in GSTR-2B doesn't make it claimable by itself: confirm the purchase, book it, and claim by ${fdate(i.lapse)} (the Section 16(4) time limit).`; }
+    case 'amount': { const g2 = S.D.g2b.find((x) => x.id === i.g); return i.bucket === 'recover' ? `Your books show a taxable value of ${inr(r.taxable)}; ${s.name} reported ${inr(g2.taxable)}, which is ${inr(g.impact)} more credit than your books claim. Check the bill. If GSTR-2B is right, correct your books and the extra credit is potential credit to review.` : `Your books show a taxable value of ${inr(r.taxable)}; ${s.name} reported ${inr(g2.taxable)}. Only the difference is at stake: ${inr(g.impact)} more credit in your books than GSTR-2B supports. Ask them to amend GSTR-1, or claim only the GSTR-2B value this month.`; }
     case 'taxValue': return `At ${r.rate}% on ${inr(r.taxable)}, the tax should be ${inr(i.expected)}, but ${inr(tax(r))} was recorded. Correct the entry before filing.`;
-    case 'gstin': return `The GSTIN in your books (${r.gstin}) fails the checksum. GSTR-2B shows ${i.good} for the same invoice and amount, so it's a typing error. Fix it in the books and the credit is safe.`;
+    case 'gstin': return `The GSTIN in your books (${r.gstin}) fails the checksum. GSTR-2B shows ${i.good} for the same invoice number and amount, so it is probably a typing error, but Rekora never merges two suppliers on its own. Confirm it is the same supplier, then fix the GSTIN in your books.`;
     case 'rate': return `${s.name} charged ${r.rate}% on HSN ${r.hsn} (${HSN[r.hsn].d}). The rate master says ${i.mr}% for ${fdate(r.date)}.${i.scrapped ? ` The ${r.rate}% slab was scrapped on 22 Sep 2025.` : ''} The extra ${inr(g.impact)} of GST isn't safe to claim. Ask for a credit note.`;
     case 'taxType': return i.inter ? `${s.name} is registered in ${st} (GSTIN starts ${s.gstin.slice(0, 2)}) and the goods came to you in Delhi. That's an inter-state supply, so it should carry IGST of ${inr(tax(r))}, not CGST + SGST. Credit under the wrong head can be disallowed.${r._p && r._p.length ? ' Amounts and payment match, so only the tax type is wrong.' : ''}` : `${s.name} is in Delhi, like you, so this bill should carry CGST + SGST, not IGST of ${inr(tax(r))}.`;
     case 'duplicate': { const t = S.D.books.find((x) => x.id === i.twin); return `${t.inv} and ${r.inv} are the same bill entered twice: same supplier, amount and date. Only one appears in GSTR-2B and the bank. Remove the second entry, or you over-claim ${inr(g.impact)}.`; }
-    case 'unpaid180': return `This bill dated ${fdate(r.date)} is still unpaid after ${i.age} days. Under the 180-day rule (Section 16(2), Rule 37) you must reverse ${inr(g.impact)} of credit with interest, and you can claim it back once you pay.`;
+    case 'unpaid180': return `This bill dated ${fdate(r.date)} is unpaid or part-paid after ${i.age} days, with ${inr(i.unpaid)} still outstanding${i.paid ? ` (${inr(i.paid)} was paid)` : ''}. Under the 180-day rule (Section 16(2), Rule 37) credit is reversed in proportion to the unpaid part, here ${inr(g.impact)}, and you can claim it back once you pay. Interest at 18% a year from the date the credit was availed is about ${inr(i.interest)} so far.`;
     case 'spike': return `This bill's taxable value of ${inr(r.taxable)} is ${i.ratio}× ${s.name}'s usual ${inr(i.med)}.${i.sunday ? ' It\'s dated on a Sunday.' : ''} One-off bills like this are how fake-ITC invoices often look. Hold the payment and check the e-way bill before claiming.`;
-    case 'split': { const ps = i.parts.map((id) => S.D.bank.find((p) => p.id === id)); return `${s.name}'s bill ${r.inv} (${inr(total(r))}) was paid in ${ps.length} parts: ${ps.map((p) => `${inr(p.amount)} on ${fdate(p.date)}`).join(' and ')}. The parts add up exactly, so TaxLens matched them with ${TYPES.split.conf}% confidence. Confirm to close it.`; }
+    case 'split': { const ps = i.parts.map((id) => S.D.bank.find((p) => p.id === id)); return `${s.name}'s bill ${r.inv} (${inr(total(r))}) looks to be paid in ${ps.length} parts: ${ps.map((p) => `${inr(p.amount)} on ${fdate(p.date)}`).join(' and ')}. The parts add up exactly, but bank narrations rarely name the invoice, so Rekora does not decide this alone. Confirm the allocation to close it.`; }
+    case 'combined': { const p = S.D.bank.find((x) => x.id === i.pay); return `One payment of ${inr(p.amount)} on ${fdate(p.date)} ("${p.ref}") matches ${g.bills.map((id) => rec(id).inv).join(' + ')} from ${s.name} added together. It looks like a bulk payment. Confirm the allocation so these bills are not wrongly treated as unpaid under the 180-day rule.`; }
+    case 'doublePay': { const a = S.D.bank.find((x) => x.id === i.first), b2 = S.D.bank.find((x) => x.id === i.pay); return `${r.inv} (${inr(total(r))}) was paid on ${fdate(a.date)} and again on ${fdate(b2.date)}, both naming the same invoice. The bill and its credit are fine; ${inr(b2.amount)} of cash went out twice. Ask ${s.name} for a refund or an adjustment against the next bill. This is a cash leak, so it is not counted in the credit buckets.`; }
   }
 }
 const ACTIONS = {
@@ -976,6 +800,8 @@ const ACTIONS = {
   duplicate:[['Remove duplicate', 'fix', 'Duplicate removed from the books.']],
   unpaid180:[['Reverse ITC', 'fix', 'Credit reversed. Re-claim it once you pay.'], ['Mark as paid', 'none', 'Marked as paid. Credit can stay.']],
   spike:[['Hold payment', 'none', 'Payment on hold until delivery is verified.'], ['Mark verified', 'none', 'Verified as genuine.']],
+  combined:[['Confirm allocation', 'none', 'Payment allocation confirmed.'], ['Not a match', 'none', 'Unlinked. The bills go back to unpaid.']],
+  doublePay:[['Ask for refund', 'none', 'Refund request noted. No credit change.'], ['Mark as adjusted', 'none', 'Marked as adjusted against a later bill.']],
   split:[['Confirm match', 'none', 'Split payment confirmed.'], ['Not a match', 'none', 'Unlinked. The bill goes back to unmatched.']],
 };
 function renderEvidence() {
@@ -987,13 +813,14 @@ function renderEvidence() {
   const score = g.type === 'spike' ? `Risk ${riskScore(g.sup)} / 100` : `${ty.conf}% confident`;
   const tabs = g.items.length > 1 ? `<div class="billtabs" role="group" aria-label="Bills in this issue">${g.items.map((it, n) => `<button data-bill="${n}" aria-pressed="${n === S.billIdx}">${esc(rec(it.bills[0]).inv)}</button>`).join('')}</div>` : '';
   const words = explain(g), figs = (words.match(/₹[\d,]+/g) || []).length;
-  el.innerHTML = `<div class="ev-top"><div><h3>${ty.label}</h3><p>${esc(supName(g.sup))}, ${inr(g.impact)} ${ty.bucket === 'recover' ? 'to recover' : ty.bucket === 'confirm' ? 'protected' : 'at stake'}</p></div><span class="conf">${score}</span></div>
+  el.innerHTML = `<div class="ev-top"><div><h3>${ty.label}</h3><p>${esc(supName(g.sup))}, ${inr(g.impact)} ${bucketOf(g) === 'recover' ? 'to review' : bucketOf(g) === 'confirm' ? 'to confirm' : bucketOf(g) === 'leak' ? 'cash to recover' : 'at stake'}</p></div><span class="conf">${score}</span></div>
     ${tabs}${evidenceRows(g, bill)}
     <div class="explain"><h4>Why this was flagged<span>${figs} figure${figs === 1 ? '' : 's'} from the engine</span></h4><p>${esc(words)}</p></div>
+    <div class="explain"><h4>IMS advice<span>${esc(g.items[Math.min(S.billIdx, g.items.length - 1)].ims.act)}</span></h4><p>${esc(g.items[Math.min(S.billIdx, g.items.length - 1)].ims.why)}</p></div>
     <div class="ev-actions">${ACTIONS[g.type].map(([label, act], n) => `<button class="btn small ${n === 0 ? 'primary' : ''}" data-act="${act}" data-n="${n}">${label}</button>`).join('')}</div>`;
 }
 function riskScore(k) {
-  const w = { spike:35, missing2b:15, taxType:20, rate:20, gstin:15, amount:15, duplicate:10, unpaid180:20, taxValue:10, missingBooks:0, split:0 };
+  const w = { spike:35, missing2b:15, taxType:20, rate:20, gstin:15, amount:15, duplicate:10, unpaid180:20, taxValue:10, missingBooks:0, split:0, combined:0, doublePay:10 };
   let s = S.D.suppliers[k].base;
   S.groups.filter((g) => g.sup === k).forEach((g) => s += w[g.type] * (g.type === 'missing2b' ? Math.min(3, g.bills.length) : 1));
   return Math.min(99, s);
@@ -1001,7 +828,7 @@ function riskScore(k) {
 function renderSuppliers() {
   const rows = Object.keys(S.D.suppliers).map((k) => {
     const gs = S.groups.filter((g) => g.sup === k);
-    const exposed = gs.filter((g) => ['risk', 'reverse', 'review'].includes(TYPES[g.type].bucket)).reduce((a, g) => a + g.impact, 0);
+    const exposed = gs.filter((g) => ['risk', 'reverse', 'review'].includes(bucketOf(g))).reduce((a, g) => a + g.impact, 0);
     return { k, s:S.D.suppliers[k], open:gs.length, exposed, score:riskScore(k) };
   }).sort((a, b) => b.score - a.score);
   const shown = S.allSup ? rows : rows.slice(0, 8);
@@ -1137,7 +964,7 @@ function answer(q) {
   }
   if (/risk|most|top|worst|exposed/.test(t)) {
     const by = {};
-    S.groups.filter((g) => ['risk', 'reverse'].includes(TYPES[g.type].bucket)).forEach((g) => { (by[g.sup] = by[g.sup] || { amt:0, gs:[] }).amt += g.impact; by[g.sup].gs.push(g); });
+    S.groups.filter((g) => ['risk', 'reverse'].includes(bucketOf(g))).forEach((g) => { (by[g.sup] = by[g.sup] || { amt:0, gs:[] }).amt += g.impact; by[g.sup].gs.push(g); });
     const top = Object.entries(by).sort((a, b) => b[1].amt - a[1].amt).slice(0, 5);
     return { html:`<p>Top suppliers by credit at risk or to reverse:</p><ul>${top.map(([k, v]) => `<li><b>${esc(supName(k))}</b>: ${inr(v.amt)} ${v.gs.map(refBtn).join('')}</li>`).join('')}</ul>` };
   }
