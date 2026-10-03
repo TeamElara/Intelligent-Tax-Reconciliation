@@ -1028,10 +1028,16 @@ function scan(label, then) {
 /* =====================================================================
    Copilot (demo): intent matching over the engine's output
    ===================================================================== */
-const SUGGEST = ['Which suppliers put the most ITC at risk?', 'Why is Arora Wires flagged?', 'How much GST do I pay this month?', 'What should I do before 14 Oct?', 'Draft a follow-up to Gupta Steel'];
+// Suggested questions use suppliers that are actually in the loaded data.
+function suggestions() {
+  const top = {}; S.groups.filter((g) => ['risk', 'reverse'].includes(bucketOf(g))).forEach((g) => { top[g.sup] = (top[g.sup] || 0) + g.impact; });
+  const worst = Object.entries(top).sort((a, b) => b[1] - a[1])[0];
+  const draft = S.groups.find((g) => ['missing2b', 'taxType', 'rate', 'amount'].includes(g.type));
+  return ['Which suppliers put the most ITC at risk?', worst ? `Why is ${supName(worst[0])} flagged?` : 'What is flagged this month?', 'How much GST do I pay this month?', 'What should I do before 14 Oct?', draft ? `Draft a follow-up to ${supName(draft.sup)}` : 'Draft a follow-up'];
+}
 function greet() {
   addMsg('ai', `<p>This period has <b>${S.groups.length} open issues</b> worth ${inr(S.groups.reduce((a, g) => a + g.impact, 0))} in this sample. Ask me anything about them.</p>`, 0);
-  $('#suggest').innerHTML = SUGGEST.map((q) => `<button type="button">${q}</button>`).join('');
+  $('#suggest').innerHTML = suggestions().map((q) => `<button type="button">${q}</button>`).join('');
 }
 function engineFigureValues() {
   const values = new Set();
@@ -1041,6 +1047,10 @@ function engineFigureValues() {
   const h = heads();
   [h.itc, h.used, h.cash].forEach((part) => Object.values(part).forEach(add));
   (S.groups || []).forEach((g) => { add(g.impact); (g.items || []).forEach((item) => Object.values(item).forEach(add)); });
+  // Sums the copilot shows: per supplier (all issues, and at-risk plus to-reverse), per bucket, and everything open.
+  const sums = new Map(), sum = (k, n) => sums.set(k, (sums.get(k) || 0) + n);
+  (S.groups || []).forEach((g) => { const b = bucketOf(g); sum('all', g.impact); sum('b:' + b, g.impact); sum('s:' + g.sup, g.impact); if (b === 'risk' || b === 'reverse') sum('sr:' + g.sup, g.impact); });
+  sums.forEach(add);
   [S.D.books, S.D.g2b, S.D.bank].forEach((rows) => (rows || []).forEach((row) => {
     add(row.taxable); add(row.cgst); add(row.sgst); add(row.igst); add(row.amount);
     if (row.taxable !== undefined) { add(tax(row)); add(total(row)); }
@@ -1049,14 +1059,15 @@ function engineFigureValues() {
 }
 function answerFigures(html) {
   const text = html.replace(/<[^>]*>/g, ' ');
-  return [...text.matchAll(/₹\s*([\d,.]+)\s*(lakh|L)?/gi)].map((match) => {
+  return [...text.matchAll(/₹\s*([\d,]+(?:\.\d+)?)\s*(lakh|L)?\b/gi)].map((match) => {
     const amount = Number(match[1].replace(/,/g, ''));
-    return /lakh|L/i.test(match[2] || '') ? Math.round(amount * 100000) : Math.round(amount);
-  }).filter(Number.isFinite);
+    return { amount, lakh:!!match[2] };
+  }).filter((f) => Number.isFinite(f.amount));
 }
 function verifyAnswerFigures(html) {
   const figures = answerFigures(html), available = engineFigureValues();
-  return { count:figures.length, verified:figures.every((figure) => available.has(figure)) };
+  const ok = (f) => f.lakh ? [...available].some((v) => (v / 100000).toFixed(1) === f.amount.toFixed(1)) : available.has(Math.round(f.amount));
+  return { count:figures.length, verified:figures.every(ok) };
 }
 function addMsg(who, html, verification) {
   const m = document.createElement('div'); m.className = 'msg ' + who; m.innerHTML = html;
@@ -1098,7 +1109,7 @@ function answer(q) {
     const rows = [['Reject or keep pending in IMS', pick(['taxType', 'rate', 'amount'])], ['Accept in IMS after booking', pick(['missingBooks'])], ['Chase the supplier, keep the claim pending', pick(['missing2b'])], ['Fix in your books', pick(['duplicate', 'gstin', 'taxValue'])]].filter((r) => r[1].length);
     return { html:`<p>Draft GSTR-2B for September is generated on 14 Oct. Bills you don't act on in IMS are deemed accepted, so:</p><ul>${rows.map(([l, gs]) => `<li><b>${l}</b>: ${gs.map(refBtn).join('')}</li>`).join('')}</ul>` };
   }
-  return { html:`<p>In this demo I can answer questions about this month's reconciliation. Try one of these:</p>` + `<ul>${SUGGEST.map((s) => `<li>${s}</li>`).join('')}</ul>` };
+  return { html:`<p>In this demo I can answer questions about this month's reconciliation. Try one of these:</p>` + `<ul>${suggestions().map((s) => `<li>${s}</li>`).join('')}</ul>` };
 }
 function ask(q) {
   if (!q.trim()) return;
