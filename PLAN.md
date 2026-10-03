@@ -1,7 +1,7 @@
-# Rekora prototype build plan (v2)
+# Rekora prototype build plan (v3, phase-wise)
 
 Team Elara (Arihant Jain, Mahatva Goel). Fintechstico'26, PS2 Intelligent Tax Reconciliation.
-v2 written Sat 3 Oct 2026, 20:15 IST, after reviews from Mahatva and a second Claude. Supersedes v1.
+Written Sat 3 Oct 2026. v3 splits the v2 plan into phases. Each phase ships on its own.
 
 ## The clock
 
@@ -11,102 +11,210 @@ v2 written Sat 3 Oct 2026, 20:15 IST, after reviews from Mahatva and a second Cl
 | Sun 4 Oct, ~03:00 | Shortlist results (eliminatory) |
 | Sun 4 Oct, 10:30 | Final at NSUT Dwarka: working prototype, strategy, PPT, Q&A |
 
-## Source of truth
+## How the phases work
 
-**The submission code is this repo: TeamElara/Intelligent-Tax-Reconciliation.** (name ends with a period).
-Mahatva's local `index.html` + `README.txt` (financial functions are placeholders) is an **older mockup. Don't use it.**
-The `index.html` in this repo has a working engine: it was run in Node on 3 Oct and produced 10 correct issues from the sample. Pull this repo and work only here.
+- **Every phase ends with a working, recordable app.** If the clock runs out mid-phase, revert that phase and record the previous one.
+- Each phase is one branch → one PR → merged to `main` only when its **Done when** checks pass.
+- The cut-off times are hard. A phase that isn't done by its cut-off gets dropped, not rushed.
+- The old sample stays as a fallback forever: `index.html?demo=seed`.
+- Source of truth: **this repo**. Mahatva's local mockup (placeholder functions) is retired.
 
-## What changed from v1
+```
+Phase 0  Setup                    20:15-20:30   done
+Phase 1  Rebrand + honest wording 20:30-21:00   Mahatva
+Phase 2  Shared engine + rule fixes 20:30-21:45 Arihant + Claude
+Phase 3  Generator + accuracy     21:45-22:30   Claude (Arihant reviews)
+Phase 4  Upload flow              22:15-22:45   Claude + Arihant
+Phase 5  Chaos trap               22:30-22:45   Claude
+--- 22:45 FREEZE, bug bash ---
+Phase 6  Video + submit           23:00-01:00   Mahatva records, Arihant drives
+--- 03:00 results ---
+Phase 7  Finals hardening         03:00-08:00   both, sleep in shifts
+Phase 8  Optional ML (only if 7 is done by 06:00)
+```
+Phases 1 and 2 run in parallel (different parts of the file; merge 1 first). Phases 4 and 5 depend on 2. Phase 3 depends on 2.
 
-1. **One engine.** The JS engine in `engine.js` runs both the dashboard and the accuracy test, so the measured numbers are the demo's own numbers. No Python port tonight.
-2. **One complete flow on screen:** upload 3 files → match → ranked mismatches → evidence → human decision.
-3. **Small, hand-checked demo month first** (~120 bills). The large generated set (36,000 bills) only feeds the accuracy table, using the same engine.
-4. **No ML, SHAP, LangGraph, Groq or FastAPI before the video.** Narration tonight: "Rules compute, a human decides." We don't say "ML flags" or "LLM explains" until those are actually running.
-5. **No tuning the generator to hit the deck's ₹6.3L / ₹2.4L.** Report whatever comes out, worded as "on our synthetic test set".
-6. **Uncertain = Needs review.** A GSTIN typo match, a split payment or a combined payment is never auto-accepted. A person confirms it.
+---
 
-## Engine rules (fixes to make in engine.js)
+## Phase 0: Setup (done)
+- Repo initialised and pushed to `TeamElara/Intelligent-Tax-Reconciliation.` (public).
+- Python 3.9 venv in `.venv` (only needed in Phase 8).
+- **Done when:** Mahatva has pulled `main` and opened `index.html` and sees the working Chaos Mode. ☐
+
+---
+
+## Phase 1: Rebrand and honest wording
+**Owner:** Mahatva · **Branch:** `phase-1-rebrand` · **Cut-off:** 21:00 · **Files:** `index.html` (HTML/CSS/copy only, no engine code)
+
+Tasks
+1. TaxLens → Rekora: `<title>`, brand name, "Ask Rekora", footer, copilot greeting, localStorage key `rekora-theme`.
+2. "Recoverable ITC" → **"Potential credit to review"** (bucket card, chip, waterfall label, legend, copilot text). Sub-line: "In GSTR-2B, not in your books. Check before you claim."
+3. Missing-in-2B wording: "follow up with the supplier", never "fake".
+4. DRC-01C line in the Liability steps: "a notice can follow when the claim exceeds GSTR-2B beyond the threshold".
+5. Footer: "Synthetic data for a fictional company. Rate checks use a small demo rate master."
+6. Remove any UI copy that says ML or LLM.
+
+**Done when**
+- [ ] `grep -i taxlens index.html` returns nothing
+- [ ] Both themes and a 375px-wide window look right
+- [ ] Chaos Mode still catches all 6 break types
+- [ ] No console errors
+
+---
+
+## Phase 2: Shared engine and rule fixes
+**Owner:** Arihant + Claude · **Branch:** `phase-2-engine` · **Cut-off:** 21:45 · **Files:** new `engine.js`, `index.html` (script section), new `tools/check-seed.js`
+
+**2a. Extract (do first, merge alone if time is short)**
+- Move the data constants, helpers, `TYPES`, `runEngine` and `groupIssues` into `engine.js`. It works in the browser (`<script src="engine.js">`) and in Node (`module.exports`).
+- `tools/check-seed.js` runs the engine on SEED in Node and asserts the expected 10 issues.
+- **Done when:** the UI looks identical and `node tools/check-seed.js` passes.
+
+**2b. Rule fixes** (each one is a small commit and keeps check-seed green, with updated expectations)
 
 | Check | Rule |
 |---|---|
-| Match key | GSTIN + **financial year** + canonical invoice ID. Fuzziness only in letters and separators. **Digits must be equal**, so AW-0442 never pairs with AW-0443 |
-| GSTIN typo | Checksum fails and one GSTIN in 2B is ≤ 2 characters off with the same invoice and amount → **Needs review** ("Confirm it's the same supplier"). Never auto-matched |
-| Missing in GSTR-2B | Follow-up issue: chase the supplier, keep the claim pending. **Not** "fake ITC" |
-| Missing in books | Bucket renamed **"Potential credit to review"**. Reason includes the time limit: FY 2025-26 credit lapses after 30 Nov 2026 |
-| Amount / tax arithmetic | Impact = the **difference only**. 2B higher than books → potential credit, not at risk |
-| Wrong rate | Flag only when **overcharged**. Impact = extra tax. Undercharged → no reversal. Limited to the demo rate-master products, labelled as a demo |
-| Wrong tax type | IGST vs CGST + SGST from the state codes (unchanged) |
-| Duplicate | Same key twice in books (unchanged) |
-| Unpaid 180+ days | Only if credit was claimed. Reverse **in proportion to the unpaid amount**. Show interest at 18% a year |
-| Split payment | 2 to 3 payments summing to one bill → **Needs review** |
-| Combined payment (new) | One payment covering 2 to 3 bills of the same supplier → **Needs review**, so bulk-paid bills aren't falsely flagged as unpaid |
-| Double payment (new) | Same bill paid twice → **cash leak**, kept out of the credit buckets and the "wrong credit" total |
-| Spike | Called a **"median rule"**, never ML |
-| IMS advice (new) | Every issue gets Accept / Pending / Reject advice. One derived field |
-| Bank evidence | Matched on supplier name in the narration + amount + date window. The evidence panel shows the narration so a judge can see how we know who was paid |
-| Liability | Output tax comes from a generated sales total, not a constant. Cash to pay = output tax − eligible credit, with Section 49 set-off (already built) |
+| Match key | GSTIN + **financial year** + canonical invoice ID. Letters and separators can differ, **digits must match** (AW-0442 ≠ AW-0443) |
+| GSTIN typo | Checksum fails, and a 2B GSTIN is ≤ 2 characters off with the same invoice and amount → **Needs review** ("Confirm it's the same supplier"). Never auto-matched |
+| Missing in 2B | Follow-up issue, claim kept pending |
+| Missing in books | "Potential credit to review", with the time limit: FY 2025-26 credit lapses after 30 Nov 2026 |
+| Amount / tax arithmetic | Impact = **difference only**. 2B higher than books → potential credit |
+| Wrong rate | Only when **overcharged**. Impact = extra tax |
+| Unpaid 180+ days | Reverse **in proportion to the unpaid amount**. Show interest at 18% a year |
+| Split payment | 2-3 payments = one bill → **Needs review** |
+| Combined payment (new) | One payment = 2-3 bills of the same supplier → **Needs review** |
+| Double payment (new) | Same bill paid twice → **cash leak**, outside the credit buckets and the hero total |
+| Spike | Label "median rule", never ML |
+| IMS advice (new) | Every issue gets Accept / Pending / Reject in the evidence panel |
+| Bank evidence | Evidence shows the bank narration (supplier name in it) so the match is explainable |
 
-## Tonight's build (20:15 to 23:00)
+**Done when**
+- [ ] `node tools/check-seed.js` passes
+- [ ] SEED gets 2 new rows (one combined payment, one double payment) and both show in the queue with correct buckets
+- [ ] Resolve and Undo still move the ₹ totals correctly
+- [ ] Chaos Mode catches all 6 break types
 
-| # | Task | Owner | Time | Done by |
-|---|---|---|---|---|
-| 0 | Push this repo (private for tonight). Mahatva pulls it | Arihant | 5m | 20:25 |
-| 1 | Rebrand TaxLens → Rekora. Wording: "Potential credit to review", DRC-01C threshold, no ML/LLM claims in UI copy | Mahatva | 30m | 20:55 |
-| 2 | Move the engine out of index.html into `engine.js` (browser + Node). Apply the rule fixes above | Arihant + Claude | 75m | 21:30 |
-| 3 | `tools/gen.js`: seeded generator with labels. Demo month (~120 bills, hand-checked) and full set (300 suppliers, 12 states, 18 months, ~36,000 bills). Planted types = only the ones the engine checks. Traps: separator variants, ₹1 rounding, legit split and combined payments, recurring same-amount bills, pre-22 Sep 2025 old-slab bills, invoice numbers restarting in April | Claude | 45m | 22:00 |
-| 4 | `tools/eval.js`: precision, recall and ₹-weighted recall per type, plus trap false positives → `data/eval.json`. Accuracy card in the UI | Claude | 30m | 22:15 |
-| 5 | **Upload flow**: the drop zone takes books / 2B / bank CSVs → parse → engine → dashboard. The demo month ships as these 3 CSVs | Claude + Arihant | 40m | 22:45 |
-| 6 | Chaos Mode **trap break**: "Reformat the invoice number" → "Still matched, no false flag". Scoreboard gets a "correctly ignored" count | Claude | 15m | 22:45 |
-| 7 | Video script with corrected wording, timed to 2:15 | Mahatva | parallel | 22:30 |
+**If late:** merge 2a only, plus whichever fixes are done. The old rules still work.
 
-**22:45 feature freeze.** Anything unfinished gets cut, not rushed. 22:45 to 23:00 bug bash: every Chaos break × every clean bill, upload → reset → upload, both themes, no console errors.
-The old sample (`SEED`) stays as a fallback via `?demo=seed`.
+---
 
-## The video (23:00 to 01:00)
+## Phase 3: Generator and accuracy table
+**Owner:** Claude, Arihant reviews · **Branch:** `phase-3-accuracy` · **Cut-off:** 22:30 · **Files:** `tools/gen.js`, `tools/eval.js`, `data/`, `index.html` (Accuracy card)
+**Depends on:** Phase 2a
+
+Tasks
+1. `tools/gen.js --seed 42`, deterministic, uses `engine.js` helpers for GSTINs and the rate master.
+   - **Demo month** (Sep 2026, ~120 bills, ~20 suppliers): written as `data/demo/books.csv`, `g2b.csv`, `bank.csv`, `sales.csv` and `data/demo.js` (SEED shape). Hand-check every planted issue once.
+   - **Test set**: 300 suppliers, 12 states, Apr 2025 to Sep 2026 (18 months), ~36,000 bills → `data/test/*.csv` + `labels.csv`. Not committed if over 5 MB (regenerate with one command).
+   - Plant **only the types the engine checks**. Error rates are fixed in code and **not tuned** to any pitch number.
+   - Traps (must stay unflagged): separator variants, ₹1 rounding, legit split and combined payments, recurring same-amount bills, old-slab bills dated before 22 Sep 2025, invoice numbers restarting in April.
+   - Period-mismatch bills are never planted in the last month.
+   - `sales.csv` gives monthly output tax, so net GST payable stops being a constant.
+2. `tools/eval.js` runs **the same `engine.js`** over the test set → `data/eval.json`: per-type precision / recall / F1, ₹-weighted recall, trap false positives, runtime.
+3. Accuracy card in the UI reads `data/eval.json` (inlined as `data/eval.js` so `file://` works). Header: "Measured on our synthetic test set".
+
+**Done when**
+- [ ] `node tools/gen.js && node tools/eval.js` runs in under a minute
+- [ ] Every planted type has recall reported. Any type under 90% is either fixed or shown honestly
+- [ ] The Accuracy card renders in both themes
+
+**If late:** ship the demo month without the accuracy card, and say "accuracy table in the final" in the video.
+
+---
+
+## Phase 4: Upload flow
+**Owner:** Claude + Arihant · **Branch:** `phase-4-upload` · **Cut-off:** 22:45 · **Files:** `index.html`
+**Depends on:** Phase 2 (Phase 3 provides the demo CSVs; until then, CSVs exported from SEED work)
+
+Tasks
+1. The drop zone accepts books, 2B, bank and sales CSVs (detected by header row). Parsing happens in the browser, with no server.
+2. Parse → validate (GSTIN checksum, dates, numbers) → `runEngine` → render. Row-level errors go into a toast, never a crash.
+3. A "Load demo month" button does the same with the bundled files, as a backup if drag-and-drop misbehaves while recording.
+4. Sources cards show real row counts from the upload.
+
+**Done when**
+- [ ] Dropping the 4 demo CSVs reproduces the same issues as `data/demo.js`
+- [ ] A malformed CSV shows an error and the previous data stays
+- [ ] Upload → Chaos → Reset → Upload works
+
+**If late:** skip it. The video starts from the already-loaded dashboard.
+
+---
+
+## Phase 5: Chaos Mode trap
+**Owner:** Claude · **Branch:** `phase-5-trap` · **Cut-off:** 22:45 · **Files:** `index.html`
+**Depends on:** Phase 2
+
+Tasks
+1. New break "Reformat the invoice number (should NOT be flagged)", e.g. `ASH-0563` → `ASH/563` in 2B.
+2. Scoreboard: Planted / Caught / Missed / **Correctly ignored**. A trap that gets flagged counts as a **false alarm**.
+3. Toast: "Still matched. No false flag."
+
+**Done when:** the trap stays quiet on all clean bills, and the real breaks are still caught.
+
+---
+
+## 22:45 Freeze and bug bash (15 min)
+- Every Chaos break × every clean bill. Upload → Reset → Upload. Both themes. Recording window size. Zero console errors.
+- Merge only green phases to `main`. Tag `video-cut`.
+
+---
+
+## Phase 6: Video and submission
+**Owner:** Mahatva records and narrates, Arihant drives the screen · **Cut-off:** **01:00 submitted**
 
 | Time | Say | Show |
 |---|---|---|
-| 0:00-0:20 | One accountant, ~2,000 bills a month, books vs GSTR-2B vs bank. If the claim exceeds 2B beyond the threshold, a DRC-01C notice follows, and not responding can block the next GSTR-1 | Deck slide 2 |
-| 0:20-0:35 | Existing tools match books with GSTR-2B. Rekora adds payment evidence and a ₹-ranked review workflow. Rules compute, a human decides | Deck slide 4 |
-| 0:35-0:50 | Upload books, 2B and bank CSVs → reconciled | App |
-| 0:50-1:20 | Buckets and net cash payable → biggest ₹ issue → evidence side by side (AW-0442 vs AW/442 still matched; wrong tax type in red) → IMS advice → decide, totals update → Hindi follow-up | App |
-| 1:20-1:50 | Chaos Mode: break a clean bill → caught in X ms. Then the trap: reformat an invoice number → correctly ignored | App |
-| 1:50-2:10 | Accuracy on our synthetic test set: N bills, per-type recall, ₹-weighted recall, trap false positives | App |
+| 0:00-0:20 | One accountant, ~2,000 bills a month, books vs GSTR-2B vs bank. If the claim exceeds 2B beyond a threshold, a DRC-01C notice follows, and not responding can block the next GSTR-1 | Deck slide 2 |
+| 0:20-0:35 | Existing tools match books with 2B. Rekora adds payment evidence and a ₹-ranked review workflow. Rules compute, a human decides | Deck slide 4 |
+| 0:35-0:50 | Upload books, 2B, bank → reconciled *(Phase 4)* | App |
+| 0:50-1:20 | Buckets and net cash payable → top ₹ issue → evidence side by side → IMS advice → decide, totals move → Hindi follow-up | App |
+| 1:20-1:50 | Chaos: break a bill → caught in X ms. Trap: reformat an invoice → correctly ignored *(Phase 5)* | App |
+| 1:50-2:10 | Accuracy on our synthetic test set *(Phase 3)* | App |
 | 2:10-2:20 | For every questionable invoice: the evidence, the ₹ at stake and a documented decision | App |
 
-- 23:00 dry run. 23:20 record (max 3 takes). 00:00 trim.
+Skip any row whose phase didn't ship. Never narrate a feature that isn't on screen.
+- 23:00 dry run with a timer. 23:20 record (max 3 takes). 00:00 trim.
 - **00:30 upload** (Drive "anyone with link" or YouTube unlisted). Test it in incognito.
-- **01:00 submit.** If the build slipped, record what works. Partial work is judged as it stands; a late video gets nothing.
+- **01:00 submit.** The 30-minute buffer is not build time.
 
-## If shortlisted (03:00 to 08:00)
+---
 
-Priority is **demo reliability over new AI**. Sleep in shifts.
-1. Matching edge cases found during the bug bash, and the full test table on screen.
-2. Slides updated to match the prototype exactly:
-   - slide 7 split into "prototype" vs "production"
-   - "every Confirm tunes the thresholds" deleted
-   - slide 9 numbers replaced with measured results
-   - "Recoverable" → "Potential credit to review"
-   - the portal answer corrected (see Q&A)
-3. Self-host the fonts (venue wifi).
-4. Optional, only if 1 to 3 are done by 06:00: Benford on the whole ledger (not per supplier), then Isolation Forest as an offline Python step that writes flags the UI reads. Mention it only once it runs.
-5. 08:00 code freeze. Rehearse the live demo 5 times without a failure.
+## Phase 7: Finals hardening (if shortlisted)
+**Owner:** both, sleeping in shifts (03:00-05:30 / 05:30-08:00) · **Cut-off:** 08:00 code freeze
 
-**Roadmap only (say so if asked):** React, FastAPI service, Postgres, Docker, LLM copilot with verifier, ML risk model, PDF/WhatsApp ingest, credit notes, blocked credits, reverse charge, imports, TDS.
+| # | Task | Owner |
+|---|---|---|
+| 7.1 | Fix every bug noted during the bug bash and recording | Arihant |
+| 7.2 | Finish any phase 3-5 that was cut | Arihant + Claude |
+| 7.3 | Self-host the Eczar and Mukta woff2 fonts (venue wifi) | Arihant |
+| 7.4 | Deck: slide 7 "prototype vs production"; delete "every Confirm tunes thresholds"; slide 9 measured numbers; "Potential credit to review"; corrected portal answer; one accuracy slide | Mahatva |
+| 7.5 | Rehearse the live demo 5 times in a row without a failure. Prep the Q&A below | both |
 
-## Q&A answers (corrected)
+**Done when:** 5 clean rehearsals, the deck matches the app exactly, and the app is saved offline on both laptops.
 
-- *Doesn't GSTN already do this?* GSTN offers a GSTR-2B vs purchase-register matching tool. Rekora adds the bank leg (payments, 180-day, split and combined payments), ranks by ₹ and records a decision on every item.
-- *Is a bill in 2B but not in your books free credit?* No. It's potential credit to review. Presence in 2B doesn't prove eligibility.
-- *Missing supplier filing = fraud?* No. It's a follow-up issue. A repeated pattern raises the supplier's review priority.
-- *Rate check after 22 Sep 2025?* The rate change is real, but there are exceptions, so we check only a small demo rate master of identified products.
-- *Is the accuracy real?* It's measured on our synthetic test set with ground truth and trap cases, using the same engine as the dashboard. Real data next, from a pilot.
+---
+
+## Phase 8: Optional ML (only if Phase 7 is done by 06:00)
+**Owner:** Arihant · **Files:** `ml/benford.py`, `ml/iforest.py` → `data/flags.js`
+1. Benford's law on the **whole ledger** (not per supplier), shown as one chart.
+2. Isolation Forest as an offline Python step over the test set. It writes per-bill flags with the top-2 features in plain words, and the UI shows them as "Review" items.
+- Mention ML in the pitch **only** if this is on screen. Otherwise it's roadmap.
+
+**Roadmap only (say so if asked):** React, FastAPI, Postgres, Docker, LLM copilot with verifier, PDF/WhatsApp ingest, credit notes, blocked credits, reverse charge, imports, TDS.
+
+---
+
+## Q&A answers
+- *Doesn't GSTN already do this?* GSTN offers a 2B vs purchase-register matching tool. Rekora adds the bank leg (payments, 180-day, split and combined payments), ranks by ₹ and records a decision on every item.
+- *Is a bill in 2B but not in your books free credit?* No. It's potential credit to review. Being in 2B doesn't prove eligibility.
+- *Missing supplier filing = fraud?* No. It's a follow-up issue. A repeated pattern raises review priority.
+- *Rate check after 22 Sep 2025?* The change is real but has exceptions, so we check only a small demo rate master.
+- *Is the accuracy real?* It's measured on our synthetic test set with ground truth and traps, using the same engine as the dashboard.
 - *How do you know who a bank payment went to?* The supplier name in the narration, plus amount and date. Ambiguous cases go to a person.
-- *Where's the AI?* Tonight's prototype is deliberately rules-first: every rupee is deterministic. ML for anomaly scoring and an LLM for explanations are the next layer, and they never compute a rupee.
+- *Where's the AI?* Rules-first on purpose: every rupee is deterministic. ML scoring and LLM explanations are the next layer, and they never compute a rupee.
 
 ## Open items
-- [ ] Repo private for tonight? (It's public: other PS2 teams can see pushes)
-- [ ] Mahatva pulls this repo and confirms by 20:30
+- [ ] Mahatva pulls `main` and confirms (Phase 0)
 - [ ] Google Form link open in a tab
-- [ ] Travel time to NSUT Dwarka (sets the morning code freeze)
+- [ ] Travel time to NSUT Dwarka (sets the Phase 7 freeze)
